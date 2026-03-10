@@ -29,5 +29,5 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      # Vercel auto-deploys via its GitHub integration on push to main.
-      # This workflow ensures the build passes before Vercel picks it up.
+      # Railway auto-deploys via its GitHub integration on push to main.
+      # This workflow ensures the build passes first.
