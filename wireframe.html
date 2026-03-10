@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BabyGrowth - Wireframe Mockup</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f8f6f3;
+      --card: #ffffff;
+      --primary: #e8785c;
+      --primary-hover: #d4654a;
+      --text: #2d2a26;
+      --text-muted: #8a857e;
+      --border: #e8e4df;
+      --boy: #5b9bd5;
+      --girl: #e88cb4;
+      --accent-green: #7cb87c;
+      --accent-yellow: #e8c55c;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Navigation */
+    .nav {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .nav-brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-brand svg { width: 28px; height: 28px; }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-link {
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover { background: var(--bg); color: var(--text); }
+    .nav-link.active { background: var(--primary); color: white; }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Screens */
+    .screen {
+      display: none;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .screen.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .card + .card { margin-top: 16px; }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #eee9e3; }
+
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { background: var(--bg); }
+
+    /* Children Grid */
+    .children-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .child-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .child-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+    .child-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+    }
+    .child-card.boy::before { background: var(--boy); }
+    .child-card.girl::before { background: var(--girl); }
+
+    .child-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .boy .child-avatar { background: #e8f1fa; }
+    .girl .child-avatar { background: #fce8f1; }
+
+    .child-name { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+    .child-age { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; }
+
+    .child-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .child-stat {
+      text-align: center;
+      padding: 8px;
+      background: var(--bg);
+      border-radius: 8px;
+    }
+
+    .child-stat-value { font-size: 16px; font-weight: 700; }
+    .child-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .add-child-card {
+      border: 2px dashed var(--border);
+      background: transparent;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      color: var(--text-muted);
+      font-size: 15px;
+      gap: 8px;
+    }
+    .add-child-card:hover { border-color: var(--primary); color: var(--primary); }
+
+    .add-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 300;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--card);
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { outline: none; border-color: var(--primary); }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .sex-toggle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sex-option {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .sex-option:hover { border-color: #ccc; }
+    .sex-option.boy.selected { border-color: var(--boy); background: #e8f1fa; color: var(--boy); }
+    .sex-option.girl.selected { border-color: var(--girl); background: #fce8f1; color: var(--girl); }
+
+    /* Chart Area */
+    .chart-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+
+    .chart-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .chart-tab.active { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 350px;
+      margin-top: 16px;
+    }
+
+    .chart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Percentile Legend */
+    .percentile-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .percentile-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .percentile-line {
+      width: 24px;
+      height: 2px;
+      border-radius: 1px;
+    }
+
+    .percentile-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Measurements Table */
+    .table-wrapper { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:hover td { background: var(--bg); }
+
+    .percentile-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .percentile-badge.good { background: #e8f5e8; color: #4a8c4a; }
+    .percentile-badge.normal { background: #fef3e0; color: #c87e2a; }
+
+    .actions-cell { display: flex; gap: 4px; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px;
+      width: 90%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    /* Summary Stats */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .summary-stat {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg);
+      border-radius: var(--radius);
+    }
+
+    .summary-stat-icon { font-size: 20px; margin-bottom: 4px; }
+    .summary-stat-value { font-size: 22px; font-weight: 700; }
+    .summary-stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .summary-stat-percentile { font-size: 11px; color: var(--accent-green); font-weight: 600; margin-top: 2px; }
+
+    /* Child detail header */
+    .child-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .child-detail-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .child-detail-avatar.boy { background: #e8f1fa; }
+    .child-detail-avatar.girl { background: #fce8f1; }
+
+    .child-detail-info h2 { font-size: 24px; font-weight: 700; }
+    .child-detail-info p { font-size: 14px; color: var(--text-muted); }
+
+    .child-detail-actions { margin-left: auto; display: flex; gap: 8px; }
+
+    /* Wireframe badge */
+    .wireframe-badge {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: var(--text);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wireframe-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+    }
+
+    /* Screen indicator */
+    .screen-indicator {
+      text-align: center;
+      padding: 8px;
+      background: #fff3e0;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #c87e2a;
+      margin-bottom: 20px;
+      border: 1px dashed #e8c55c;
+    }
+
+    /* Login screen */
+    .login-wrapper {
+      min-height: calc(100vh - 80px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .login-logo h1 {
+      font-size: 28px;
+      color: var(--primary);
+    }
+
+    .login-logo p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .screen { padding: 16px; }
+      .children-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .child-detail-header { flex-direction: column; text-align: center; }
+      .child-detail-actions { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="6" fill="#e8785c"/><path d="M4 24c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="#e8785c" stroke-width="2.5" fill="none"/><circle cx="14" cy="10" r="2" fill="white"/></svg>
+      BabyGrowth
+    </div>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="showScreen('dashboard')">Dashboard</button>
+      <button class="nav-link" onclick="showScreen('child-detail')">Child View</button>
+      <button class="nav-link" onclick="showScreen('login')">Login</button>
+    </div>
+    <div class="nav-user">
+      <div class="avatar">BG</div>
+    </div>
+  </nav>
+
+  <!-- ==================== SCREEN: LOGIN ==================== -->
+  <div class="screen" id="screen-login">
+    <div class="screen-indicator">WIREFRAME: Login / Register Screen</div>
+    <div class="login-wrapper">
+      <div class="login-card card">
+        <div class="login-logo">
+          <h1>BabyGrowth</h1>
+          <p>Track your little one's milestones</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="parent@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" placeholder="Enter your password">
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="showScreen('dashboard')">Sign In</button>
+
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted)">
+          Don't have an account? <a href="#" style="color:var(--primary);font-weight:600">Sign up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCREEN: DASHBOARD ==================== -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="screen-indicator">WIREFRAME: Dashboard — My Children</div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h1 style="font-size:24px;font-weight:700">My Children</h1>
+      <button class="btn btn-primary" onclick="openModal('modal-add-child')">+ Add Child</button>
+    </div>
+
+    <div class="children-grid">
+      <!-- Child 1: Boy -->
+      <div class="child-card boy" onclick="showScreen('child-detail')">
+        <div class="child-avatar">👶</div>
+        <div class="child-name">Miguel</div>
+        <div class="child-age">8 months old &middot; Born Jul 10, 2025</div>
+        <div class="child-stats">
+          <div class="child-stat">
+            <div class="child-stat-value">8.2</div>
+            <div class="child-stat-label">kg</div>
+          </div>
+          <div class="child-stat">
+            <div class="child-stat-value">70</div>
+            <div class="child-stat-label">cm</div>
+          </div>
+          <div class="child-stat">
+            <div class="child-stat-value">44.5</div>
+            <div class="child-stat-label">hc cm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Child 2: Girl -->
+      <div class="child-card girl" onclick="showScreen('child-detail-girl')">
+        <div class="child-avatar">👧</div>
+        <div class="child-name">Luna</div>
+        <div class="child-age">2 years, 3 months &middot; Born Dec 5, 2023</div>
+        <div class="child-stats">
+          <div class="child-stat">
+            <div class="child-stat-value">12.1</div>
+            <div class="child-stat-label">kg</div>
+          </div>
+          <div class="child-stat">
+            <div class="child-stat-value">87</div>
+            <div class="child-stat-label">cm</div>
+          </div>
+          <div class="child-stat">
+            <div class="child-stat-value">48.2</div>
+            <div class="child-stat-label">hc cm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Child Card -->
+      <div class="child-card add-child-card" onclick="openModal('modal-add-child')">
+        <div class="add-icon">+</div>
+        Add a child
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCREEN: CHILD DETAIL ==================== -->
+  <div class="screen" id="screen-child-detail">
+    <div class="screen-indicator">WIREFRAME: Child Detail — Growth Charts & Measurements</div>
+
+    <!-- Header -->
+    <div class="child-detail-header">
+      <div class="child-detail-avatar boy">👶</div>
+      <div class="child-detail-info">
+        <h2>Miguel</h2>
+        <p>8 months old &middot; Boy &middot; Born Jul 10, 2025</p>
+      </div>
+      <div class="child-detail-actions">
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-measurement')">+ Log Measurement</button>
+        <button class="btn btn-secondary btn-sm">Edit</button>
+        <button class="btn btn-secondary btn-sm">Export</button>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="summary-stat">
+        <div class="summary-stat-icon">⚖️</div>
+        <div class="summary-stat-value">8.2 kg</div>
+        <div class="summary-stat-label">Weight</div>
+        <div class="summary-stat-percentile">50th percentile</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-stat-icon">📏</div>
+        <div class="summary-stat-value">70 cm</div>
+        <div class="summary-stat-label">Height</div>
+        <div class="summary-stat-percentile">55th percentile</div>
+      </div>
+      <div class="summary-stat">
+        <div class="summary-stat-icon">🧠</div>
+        <div class="summary-stat-value">44.5 cm</div>
+        <div class="summary-stat-label">Head Circ.</div>
+        <div class="summary-stat-percentile">60th percentile</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Growth Chart</div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="switchChart(this, 'weight')">Weight</button>
+          <button class="chart-tab" onclick="switchChart(this, 'height')">Height</button>
+          <button class="chart-tab" onclick="switchChart(this, 'head')">Head Circ.</button>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="growthChart" class="chart-canvas"></canvas>
+      </div>
+
+      <div class="percentile-legend">
+        <div class="percentile-item">
+          <div class="percentile-line" style="background:#ddd"></div> 3rd
+        </div>
+        <div class="percentile-item">
+          <div class="percentile-line" style="background:#c8daf0"></div> 15th
+        </div>
+        <div class="percentile-item">
+          <div class="percentile-line" style="background:#8bb8e0"></div> 50th
+        </div>
+        <div class="percentile-item">
+          <div class="percentile-line" style="background:#c8daf0"></div> 85th
+        </div>
+        <div class="percentile-item">
+          <div class="percentile-line" style="background:#ddd"></div> 97th
+        </div>
+        <div class="percentile-item">
+          <div class="percentile-dot" style="background:var(--primary)"></div> Miguel
+        </div>
+      </div>
+    </div>
+
+    <!-- Measurements Table -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <div class="card-title">Measurement History</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-measurement')">+ Add</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Age</th>
+              <th>Weight</th>
+              <th>Height</th>
+              <th>Head Circ.</th>
+              <th>Percentile</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mar 10, 2026</td>
+              <td>8 mo</td>
+              <td>8.2 kg</td>
+              <td>70 cm</td>
+              <td>44.5 cm</td>
+              <td><span class="percentile-badge good">P50</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" title="Edit">✏️</button>
+                <button class="btn-icon" title="Delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Feb 10, 2026</td>
+              <td>7 mo</td>
+              <td>7.8 kg</td>
+              <td>68 cm</td>
+              <td>44.0 cm</td>
+              <td><span class="percentile-badge good">P48</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" title="Edit">✏️</button>
+                <button class="btn-icon" title="Delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Jan 12, 2026</td>
+              <td>6 mo</td>
+              <td>7.3 kg</td>
+              <td>66 cm</td>
+              <td>43.2 cm</td>
+              <td><span class="percentile-badge good">P45</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" title="Edit">✏️</button>
+                <button class="btn-icon" title="Delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Dec 10, 2025</td>
+              <td>5 mo</td>
+              <td>6.8 kg</td>
+              <td>64 cm</td>
+              <td>42.5 cm</td>
+              <td><span class="percentile-badge normal">P42</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" title="Edit">✏️</button>
+                <button class="btn-icon" title="Delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Oct 10, 2025</td>
+              <td>3 mo</td>
+              <td>5.9 kg</td>
+              <td>60 cm</td>
+              <td>40.5 cm</td>
+              <td><span class="percentile-badge good">P50</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" title="Edit">✏️</button>
+                <button class="btn-icon" title="Delete">🗑️</button>
+              </td>
+            </tr>
+            <tr>
+              <td>Jul 10, 2025</td>
+              <td>Birth</td>
+              <td>3.4 kg</td>
+              <td>50 cm</td>
+              <td>35.0 cm</td>
+              <td><span class="percentile-badge good">P52</span></td>
+              <td class="actions-cell">
+                <button class="btn-icon" title="Edit">✏️</button>
+                <button class="btn-icon" title="Delete">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADD CHILD ==================== -->
+  <div class="modal-overlay" id="modal-add-child">
+    <div class="modal">
+      <div class="modal-title">Add a Child</div>
+
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="form-input" placeholder="Baby's name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date of Birth</label>
+        <input class="form-input" type="date">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Sex</label>
+        <div class="sex-toggle">
+          <div class="sex-option boy selected" onclick="toggleSex(this, 'boy')">👦 Boy</div>
+          <div class="sex-option girl" onclick="toggleSex(this, 'girl')">👧 Girl</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Birth Measurements (optional)</label>
+        <div class="form-row">
+          <input class="form-input" placeholder="Weight (kg)">
+          <input class="form-input" placeholder="Height (cm)">
+        </div>
+        <div style="margin-top:8px">
+          <input class="form-input" placeholder="Head circumference (cm)" style="max-width:calc(50% - 8px)">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('modal-add-child')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('modal-add-child')">Add Child</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: ADD MEASUREMENT ==================== -->
+  <div class="modal-overlay" id="modal-add-measurement">
+    <div class="modal">
+      <div class="modal-title">Log Measurement</div>
+
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" value="2026-03-10">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Weight (kg)</label>
+        <input class="form-input" type="number" step="0.1" placeholder="e.g. 8.2">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Height (cm)</label>
+        <input class="form-input" type="number" step="0.1" placeholder="e.g. 70">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Head Circumference (cm)</label>
+        <input class="form-input" type="number" step="0.1" placeholder="e.g. 44.5">
+      </div>
+
+      <p style="font-size:12px;color:var(--text-muted);margin-top:4px">
+        Tip: You don't need to fill all fields. Log what you have!
+      </p>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('modal-add-measurement')">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal('modal-add-measurement')">Save Measurement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wireframe Badge -->
+  <div class="wireframe-badge">WIREFRAME MOCKUP</div>
+
+  <script>
+    // Screen navigation
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + id).classList.add('active');
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+      document.querySelectorAll('.nav-link').forEach(l => {
+        if (l.textContent.toLowerCase().includes(id.split('-')[0]) ||
+            (id === 'dashboard' && l.textContent === 'Dashboard') ||
+            (id.startsWith('child') && l.textContent === 'Child View') ||
+            (id === 'login' && l.textContent === 'Login')) {
+          l.classList.add('active');
+        }
+      });
+    }
+
+    // Modal
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Sex toggle
+    function toggleSex(el, sex) {
+      el.parentElement.querySelectorAll('.sex-option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    // Chart tabs
+    function switchChart(el, type) {
+      el.parentElement.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      drawChart(type);
+    }
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+      });
+    });
+
+    // Draw growth chart on canvas
+    function drawChart(type) {
+      const canvas = document.getElementById('growthChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width = canvas.offsetWidth * 2;
+      const H = canvas.height = canvas.offsetHeight * 2;
+      ctx.scale(2, 2);
+      const w = W / 2, h = H / 2;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const pad = { top: 20, right: 20, bottom: 40, left: 50 };
+      const cw = w - pad.left - pad.right;
+      const ch = h - pad.top - pad.bottom;
+
+      // Data ranges per type
+      const ranges = {
+        weight: { yMin: 2, yMax: 12, unit: 'kg', data: [3.4, 5.9, 6.8, 7.3, 7.8, 8.2] },
+        height: { yMin: 45, yMax: 80, unit: 'cm', data: [50, 60, 64, 66, 68, 70] },
+        head:   { yMin: 32, yMax: 48, unit: 'cm', data: [35, 40.5, 42.5, 43.2, 44.0, 44.5] }
+      };
+
+      const r = ranges[type] || ranges.weight;
+      const months = [0, 3, 5, 6, 7, 8];
+      const xMax = 12;
+
+      function x(m) { return pad.left + (m / xMax) * cw; }
+      function y(v) { return pad.top + ch - ((v - r.yMin) / (r.yMax - r.yMin)) * ch; }
+
+      // Percentile bands (simplified curves)
+      const percentiles = {
+        weight: {
+          p3:  [2.5, 4.4, 5.3, 5.7, 6.0, 6.3, 6.6, 6.8, 7.0, 7.1, 7.3, 7.5, 7.6],
+          p15: [2.9, 5.0, 6.1, 6.5, 6.9, 7.2, 7.4, 7.7, 7.9, 8.0, 8.2, 8.4, 8.5],
+          p50: [3.3, 5.6, 6.9, 7.4, 7.8, 8.1, 8.4, 8.6, 8.9, 9.0, 9.2, 9.4, 9.6],
+          p85: [3.7, 6.2, 7.7, 8.3, 8.7, 9.1, 9.4, 9.7, 9.9, 10.1, 10.3, 10.5, 10.7],
+          p97: [4.0, 6.7, 8.3, 8.9, 9.4, 9.8, 10.2, 10.5, 10.8, 11.0, 11.2, 11.5, 11.7]
+        },
+        height: {
+          p3:  [46.3, 56.7, 61.0, 62.5, 63.8, 65.0, 66.1, 67.2, 68.2, 69.1, 70.0, 70.9, 71.7],
+          p15: [47.9, 58.5, 63.0, 64.5, 66.0, 67.2, 68.3, 69.4, 70.4, 71.3, 72.2, 73.0, 73.8],
+          p50: [49.9, 60.6, 65.4, 67.0, 68.5, 69.8, 71.0, 72.1, 73.1, 74.0, 74.9, 75.8, 76.6],
+          p85: [51.8, 62.7, 67.8, 69.5, 71.0, 72.4, 73.6, 74.8, 75.8, 76.8, 77.6, 78.5, 79.4],
+          p97: [53.4, 64.4, 69.6, 71.3, 72.9, 74.3, 75.6, 76.8, 77.9, 78.8, 79.7, 80.6, 81.5]
+        },
+        head: {
+          p3:  [32.1, 37.6, 39.8, 40.6, 41.2, 41.8, 42.3, 42.7, 43.1, 43.4, 43.7, 44.0, 44.3],
+          p15: [33.1, 38.7, 40.9, 41.7, 42.3, 42.9, 43.4, 43.8, 44.2, 44.5, 44.8, 45.1, 45.4],
+          p50: [34.5, 40.1, 42.3, 43.1, 43.7, 44.3, 44.8, 45.2, 45.6, 45.9, 46.2, 46.5, 46.8],
+          p85: [35.8, 41.5, 43.7, 44.5, 45.1, 45.7, 46.2, 46.6, 47.0, 47.3, 47.6, 47.9, 48.2],
+          p97: [36.9, 42.6, 44.8, 45.6, 46.3, 46.9, 47.4, 47.8, 48.2, 48.5, 48.8, 49.1, 49.4]
+        }
+      };
+
+      const pData = percentiles[type] || percentiles.weight;
+
+      // Draw grid lines
+      ctx.strokeStyle = '#f0ece7';
+      ctx.lineWidth = 1;
+      const ySteps = 5;
+      for (let i = 0; i <= ySteps; i++) {
+        const val = r.yMin + (r.yMax - r.yMin) * (i / ySteps);
+        const py = y(val);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, py);
+        ctx.lineTo(w - pad.right, py);
+        ctx.stroke();
+
+        ctx.fillStyle = '#8a857e';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(val.toFixed(1) + ' ' + r.unit, pad.left - 8, py + 4);
+      }
+
+      // X axis labels
+      ctx.textAlign = 'center';
+      for (let m = 0; m <= xMax; m += 2) {
+        ctx.fillStyle = '#8a857e';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.fillText(m + ' mo', x(m), h - pad.bottom + 20);
+
+        ctx.strokeStyle = '#f0ece7';
+        ctx.beginPath();
+        ctx.moveTo(x(m), pad.top);
+        ctx.lineTo(x(m), h - pad.bottom);
+        ctx.stroke();
+      }
+
+      // Draw percentile curves
+      function drawPercentileLine(data, color, width) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        for (let m = 0; m <= 12; m++) {
+          const px = x(m);
+          const py = y(data[m]);
+          if (m === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+
+      // Fill between p3 and p97
+      ctx.fillStyle = 'rgba(91, 155, 213, 0.06)';
+      ctx.beginPath();
+      for (let m = 0; m <= 12; m++) ctx.lineTo(x(m), y(pData.p97[m]));
+      for (let m = 12; m >= 0; m--) ctx.lineTo(x(m), y(pData.p3[m]));
+      ctx.closePath();
+      ctx.fill();
+
+      // Fill between p15 and p85
+      ctx.fillStyle = 'rgba(91, 155, 213, 0.08)';
+      ctx.beginPath();
+      for (let m = 0; m <= 12; m++) ctx.lineTo(x(m), y(pData.p85[m]));
+      for (let m = 12; m >= 0; m--) ctx.lineTo(x(m), y(pData.p15[m]));
+      ctx.closePath();
+      ctx.fill();
+
+      drawPercentileLine(pData.p97, '#ddd', 1);
+      drawPercentileLine(pData.p85, '#c8daf0', 1.5);
+      drawPercentileLine(pData.p50, '#8bb8e0', 2);
+      drawPercentileLine(pData.p15, '#c8daf0', 1.5);
+      drawPercentileLine(pData.p3, '#ddd', 1);
+
+      // Percentile labels
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      const labelX = x(12) + 4;
+      ctx.fillStyle = '#bbb';
+      ctx.fillText('97th', labelX, y(pData.p97[12]) + 3);
+      ctx.fillStyle = '#a0b8d4';
+      ctx.fillText('85th', labelX, y(pData.p85[12]) + 3);
+      ctx.fillStyle = '#7ba8d0';
+      ctx.fillText('50th', labelX, y(pData.p50[12]) + 3);
+      ctx.fillStyle = '#a0b8d4';
+      ctx.fillText('15th', labelX, y(pData.p15[12]) + 3);
+      ctx.fillStyle = '#bbb';
+      ctx.fillText('3rd', labelX, y(pData.p3[12]) + 3);
+
+      // Draw baby's data points
+      ctx.strokeStyle = '#e8785c';
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < months.length; i++) {
+        const px = x(months[i]);
+        const py = y(r.data[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Data points
+      for (let i = 0; i < months.length; i++) {
+        const px = x(months[i]);
+        const py = y(r.data[i]);
+
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = '#e8785c';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+
+      // Latest point label
+      const lastIdx = months.length - 1;
+      ctx.fillStyle = '#e8785c';
+      ctx.font = 'bold 12px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(r.data[lastIdx] + ' ' + r.unit, x(months[lastIdx]), y(r.data[lastIdx]) - 12);
+    }
+
+    // Initial chart draw
+    setTimeout(() => drawChart('weight'), 100);
+    window.addEventListener('resize', () => {
+      const activeTab = document.querySelector('.chart-tab.active');
+      if (activeTab) {
+        const type = activeTab.textContent.toLowerCase().includes('weight') ? 'weight' :
+                     activeTab.textContent.toLowerCase().includes('height') ? 'height' : 'head';
+        drawChart(type);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+:root {
+	--primary: #e8785c;
+	--primary-hover: #d4654a;
+	--boy: #5b9bd5;
+	--girl: #e88cb4;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
