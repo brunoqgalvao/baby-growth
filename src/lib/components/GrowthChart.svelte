@@ -34,6 +34,37 @@
 	let canvas: HTMLCanvasElement;
 	let pointPositions: { x: number; y: number; id?: string }[] = [];
 
+	// Zoom state
+	let zoomMonthMin = $state<number | null>(null);
+	let zoomMonthMax = $state<number | null>(null);
+	let zoomValueMin = $state<number | null>(null);
+	let zoomValueMax = $state<number | null>(null);
+	let isZoomed = $derived(zoomMonthMin !== null);
+
+	// Drag selection state
+	let isDragging = $state(false);
+	let dragStartX = $state(0);
+	let dragStartY = $state(0);
+	let dragCurrentX = $state(0);
+	let dragCurrentY = $state(0);
+
+	// Store inverse mapping functions for pixel -> data conversion
+	let inverseX: ((px: number) => number) | null = null;
+	let inverseY: ((py: number) => number) | null = null;
+
+	export function resetZoom() {
+		zoomMonthMin = null;
+		zoomMonthMax = null;
+		zoomValueMin = null;
+		zoomValueMax = null;
+	}
+
+	// Reset zoom when props change
+	$effect(() => {
+		sex; standard; measurementType;
+		resetZoom();
+	});
+
 	const COLORS = {
 		percentile3: '#d4d0cb',
 		percentile15: '#b8cfe6',
@@ -80,33 +111,59 @@
 		const ch = h - pad.top - pad.bottom;
 
 		const lmsData = getLMSData(standard, sex, measurementType);
-		const maxMonths = getMaxMonths(standard);
+		const fullMaxMonths = getMaxMonths(standard);
 		const unit = getUnit(measurementType);
 		const curves = generatePercentileCurves(lmsData);
 
-		// Compute Y range from percentile curves
+		// Determine X range (months)
+		const xMin = zoomMonthMin ?? 0;
+		let maxMonths = zoomMonthMax ?? fullMaxMonths;
+
+		// Auto-limit X axis based on latest data point
+		if (zoomMonthMax === null && dataPoints.length > 0) {
+			const latestMonth = Math.max(...dataPoints.map((d) => d.month));
+			// Pick a nice ceiling that gives breathing room beyond the last point
+			const ceilings = [6, 12, 18, 24, 36, 48, 60];
+			const autoMax = ceilings.find((c) => c >= latestMonth * 1.5 && c >= latestMonth + 2);
+			if (autoMax !== undefined && autoMax < fullMaxMonths) {
+				maxMonths = autoMax;
+			}
+		}
+
+		// Compute Y range from percentile curves (within visible X range)
 		let yMin = Infinity;
 		let yMax = -Infinity;
-		for (const point of curves) {
-			yMin = Math.min(yMin, point.values[0]); // p3
-			yMax = Math.max(yMax, point.values[4]); // p97
+		if (zoomValueMin !== null && zoomValueMax !== null) {
+			yMin = zoomValueMin;
+			yMax = zoomValueMax;
+		} else {
+			for (const point of curves) {
+				if (point.month < xMin || point.month > maxMonths) continue;
+				yMin = Math.min(yMin, point.values[0]); // p3
+				yMax = Math.max(yMax, point.values[4]); // p97
+			}
+			// Include data points in range
+			for (const dp of dataPoints) {
+				if (dp.month < xMin || dp.month > maxMonths) continue;
+				yMin = Math.min(yMin, dp.value);
+				yMax = Math.max(yMax, dp.value);
+			}
+			// Add padding
+			const yRange = yMax - yMin;
+			yMin = Math.max(0, yMin - yRange * 0.08);
+			yMax = yMax + yRange * 0.08;
 		}
-		// Include data points in range
-		for (const dp of dataPoints) {
-			yMin = Math.min(yMin, dp.value);
-			yMax = Math.max(yMax, dp.value);
-		}
-		// Add padding
-		const yRange = yMax - yMin;
-		yMin = Math.max(0, yMin - yRange * 0.08);
-		yMax = yMax + yRange * 0.08;
 
 		function x(month: number): number {
-			return pad.left + (month / maxMonths) * cw;
+			return pad.left + ((month - xMin) / (maxMonths - xMin)) * cw;
 		}
 		function y(val: number): number {
 			return pad.top + ch - ((val - yMin) / (yMax - yMin)) * ch;
 		}
+
+		// Store inverse mappings for drag-to-zoom
+		inverseX = (px: number) => xMin + ((px - pad.left) / cw) * (maxMonths - xMin);
+		inverseY = (py: number) => yMin + ((pad.top + ch - py) / ch) * (yMax - yMin);
 
 		// Grid lines
 		const ySteps = 6;
@@ -138,9 +195,11 @@
 		ctx.restore();
 
 		// X axis labels
-		const monthStep = maxMonths <= 36 ? 3 : 6;
+		const xRange = maxMonths - xMin;
+		const monthStep = xRange <= 6 ? 1 : xRange <= 18 ? 2 : xRange <= 36 ? 3 : 6;
+		const firstTick = Math.ceil(xMin / monthStep) * monthStep;
 		ctx.textAlign = 'center';
-		for (let m = 0; m <= maxMonths; m += monthStep) {
+		for (let m = firstTick; m <= maxMonths; m += monthStep) {
 			ctx.fillStyle = COLORS.text;
 			ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
 			const label = m < 12 ? `${m}m` : m % 12 === 0 ? `${m / 12}y` : `${Math.floor(m / 12)}y${m % 12}m`;
@@ -228,7 +287,7 @@
 			}
 			ctx.stroke();
 
-			// Points
+			// Points and labels
 			for (let i = 0; i < sorted.length; i++) {
 				const px = x(sorted[i].month);
 				const py = y(sorted[i].value);
@@ -242,27 +301,24 @@
 				ctx.strokeStyle = COLORS.dataLine;
 				ctx.lineWidth = 2.5;
 				ctx.stroke();
-			}
 
-			// Label on last point
-			if (sorted.length > 0) {
-				const last = sorted[sorted.length - 1];
-				const lms = interpolateLMS(last.month, lmsData);
-				const pct = lms ? getPercentile(last.value, lms) : null;
+				// Label each point with value and percentile
+				const lms = interpolateLMS(sorted[i].month, lmsData);
+				const pct = lms ? getPercentile(sorted[i].value, lms) : null;
 
 				ctx.fillStyle = COLORS.dataLine;
-				ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+				ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
 				ctx.textAlign = 'center';
-				const labelText = `${last.value} ${unit}`;
-				const pctText = pct !== null ? ` (P${Math.round(pct)})` : '';
-				ctx.fillText(labelText + pctText, x(last.month), y(last.value) - 12);
+				const pctText = pct !== null ? `${Math.round(pct)}%` : '';
+				ctx.fillText(pctText, px, py - 10);
 			}
 		}
 	}
 
 	$effect(() => {
-		// Re-draw when any prop changes
+		// Re-draw when any prop or zoom state changes
 		sex; standard; measurementType; dataPoints;
+		zoomMonthMin; zoomMonthMax; zoomValueMin; zoomValueMax;
 		// Need a tick for the canvas to be in DOM
 		requestAnimationFrame(drawChart);
 	});
@@ -295,20 +351,115 @@
 		if (id) onpointdblclick(id);
 	}
 
+	function handleMouseDown(e: MouseEvent) {
+		// Only start drag on left button and not on a data point
+		if (e.button !== 0) return;
+		const { cx, cy } = getCanvasCoords(e);
+		if (findPointAt(cx, cy)) return; // let dblclick handle data points
+		isDragging = true;
+		dragStartX = cx;
+		dragStartY = cy;
+		dragCurrentX = cx;
+		dragCurrentY = cy;
+	}
+
 	function handleMouseMove(e: MouseEvent) {
 		const { cx, cy } = getCanvasCoords(e);
-		canvas.style.cursor = findPointAt(cx, cy) ? 'pointer' : 'default';
+		if (isDragging) {
+			dragCurrentX = cx;
+			dragCurrentY = cy;
+			canvas.style.cursor = 'crosshair';
+		} else {
+			canvas.style.cursor = findPointAt(cx, cy) ? 'pointer' : 'crosshair';
+		}
 	}
+
+	function handleMouseUp(e: MouseEvent) {
+		if (!isDragging) return;
+		isDragging = false;
+
+		if (!inverseX || !inverseY) return;
+
+		const dx = Math.abs(dragCurrentX - dragStartX);
+		const dy = Math.abs(dragCurrentY - dragStartY);
+
+		// Need a minimum drag distance to count as zoom (not just a click)
+		if (dx < 10 && dy < 10) return;
+
+		const x1 = inverseX(Math.min(dragStartX, dragCurrentX));
+		const x2 = inverseX(Math.max(dragStartX, dragCurrentX));
+		const y1 = inverseY(Math.max(dragStartY, dragCurrentY)); // y is inverted
+		const y2 = inverseY(Math.min(dragStartY, dragCurrentY));
+
+		zoomMonthMin = Math.max(0, x1);
+		zoomMonthMax = x2;
+		zoomValueMin = Math.max(0, y1);
+		zoomValueMax = y2;
+	}
+
+	// Draw selection rectangle overlay
+	$effect(() => {
+		if (!isDragging || !canvas) return;
+		// We need to trigger on drag coordinates
+		dragCurrentX; dragCurrentY;
+
+		requestAnimationFrame(() => {
+			drawChart();
+			const ctx = canvas.getContext('2d');
+			if (!ctx) return;
+
+			const left = Math.min(dragStartX, dragCurrentX);
+			const top = Math.min(dragStartY, dragCurrentY);
+			const width = Math.abs(dragCurrentX - dragStartX);
+			const height = Math.abs(dragCurrentY - dragStartY);
+
+			const dpr = window.devicePixelRatio || 1;
+			const rect = canvas.getBoundingClientRect();
+			ctx.save();
+			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+			// Dim everything outside selection using a clipped region
+			ctx.beginPath();
+			ctx.rect(0, 0, rect.width, rect.height);
+			// Cut out the selection area (counter-clockwise = hole)
+			ctx.moveTo(left, top);
+			ctx.lineTo(left, top + height);
+			ctx.lineTo(left + width, top + height);
+			ctx.lineTo(left + width, top);
+			ctx.closePath();
+			ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+			ctx.fill('evenodd');
+
+			// Selection border
+			ctx.strokeStyle = 'rgba(91, 155, 213, 0.7)';
+			ctx.lineWidth = 1.5;
+			ctx.setLineDash([4, 3]);
+			ctx.strokeRect(left, top, width, height);
+			ctx.setLineDash([]);
+			ctx.restore();
+		});
+	});
 </script>
 
 <svelte:window onresize={handleResize} />
 
-<div class="w-full">
+<div class="w-full relative">
 	<canvas
 		bind:this={canvas}
 		class="w-full"
 		style="height: 350px"
 		ondblclick={handleDblClick}
+		onmousedown={handleMouseDown}
 		onmousemove={handleMouseMove}
+		onmouseup={handleMouseUp}
+		onmouseleave={() => { isDragging = false; }}
 	></canvas>
+	{#if isZoomed}
+		<button
+			onclick={resetZoom}
+			class="absolute top-2 right-2 px-2.5 py-1 bg-white/90 border border-stone-200 rounded-lg text-xs font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-all cursor-pointer shadow-sm backdrop-blur-sm"
+		>
+			Reset Zoom
+		</button>
+	{/if}
 </div>

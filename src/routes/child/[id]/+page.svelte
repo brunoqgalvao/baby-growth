@@ -289,6 +289,8 @@
 						name="weightKg"
 						type="number"
 						step="0.001"
+						min="1"
+						max="99"
 						placeholder="e.g. 8.250"
 						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
 					/>
@@ -378,6 +380,8 @@
 						name="weightKg"
 						type="number"
 						step="0.001"
+						min="1"
+						max="99"
 						value={editingMeasurement.weightKg ?? ''}
 						placeholder="e.g. 8.250"
 						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"

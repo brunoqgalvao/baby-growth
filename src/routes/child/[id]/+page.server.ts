@@ -43,6 +43,9 @@ export const actions: Actions = {
 		const headCircCm = parseFloat(form.get('headCircCm') as string) || null;
 
 		if (!date) return fail(400, { error: 'Date is required' });
+		if (weightKg !== null && (weightKg < 1 || weightKg > 99)) {
+			return fail(400, { error: 'Weight must be between 1 and 99 kg' });
+		}
 		if (!weightKg && !heightCm && !headCircCm) {
 			return fail(400, { error: 'At least one measurement is required' });
 		}
@@ -77,6 +80,9 @@ export const actions: Actions = {
 		const headCircCm = parseFloat(form.get('headCircCm') as string) || null;
 
 		if (!date) return fail(400, { error: 'Date is required' });
+		if (weightKg !== null && (weightKg < 1 || weightKg > 99)) {
+			return fail(400, { error: 'Weight must be between 1 and 99 kg' });
+		}
 		if (!weightKg && !heightCm && !headCircCm) {
 			return fail(400, { error: 'At least one measurement is required' });
 		}
