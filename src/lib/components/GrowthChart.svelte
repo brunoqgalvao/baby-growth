@@ -66,17 +66,17 @@
 	});
 
 	const COLORS = {
-		percentile3: '#d4d0cb',
-		percentile15: '#b8cfe6',
-		percentile50: '#7ba8d0',
-		percentile85: '#b8cfe6',
-		percentile97: '#d4d0cb',
-		bandOuter: 'rgba(91, 155, 213, 0.06)',
-		bandInner: 'rgba(91, 155, 213, 0.1)',
+		percentile3: '#e2dbd0',
+		percentile15: '#a8e0c8',
+		percentile50: '#5bb890',
+		percentile85: '#a8e0c8',
+		percentile97: '#e2dbd0',
+		bandOuter: 'rgba(91, 184, 144, 0.06)',
+		bandInner: 'rgba(91, 184, 144, 0.1)',
 		dataLine: '#e8785c',
-		grid: '#f0ece7',
-		text: '#8a857e',
-		axis: '#ccc'
+		grid: '#f0ece5',
+		text: '#9e958a',
+		axis: '#e2dbd0'
 	};
 
 	const PERCENTILE_COLORS = [
@@ -169,7 +169,7 @@
 		const ySteps = 6;
 		ctx.strokeStyle = COLORS.grid;
 		ctx.lineWidth = 1;
-		ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+		ctx.font = '11px Nunito, sans-serif';
 
 		for (let i = 0; i <= ySteps; i++) {
 			const val = yMin + ((yMax - yMin) * i) / ySteps;
@@ -190,7 +190,7 @@
 		ctx.rotate(-Math.PI / 2);
 		ctx.textAlign = 'center';
 		ctx.fillStyle = COLORS.text;
-		ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+		ctx.font = '600 12px Quicksand, sans-serif';
 		ctx.fillText(`${getLabel(measurementType)} (${unit})`, 0, 0);
 		ctx.restore();
 
@@ -201,7 +201,7 @@
 		ctx.textAlign = 'center';
 		for (let m = firstTick; m <= maxMonths; m += monthStep) {
 			ctx.fillStyle = COLORS.text;
-			ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+			ctx.font = '11px Nunito, sans-serif';
 			const label = m < 12 ? `${m}m` : m % 12 === 0 ? `${m / 12}y` : `${Math.floor(m / 12)}y${m % 12}m`;
 			ctx.fillText(label, x(m), h - pad.bottom + 18);
 
@@ -214,7 +214,7 @@
 
 		// X axis label
 		ctx.fillStyle = COLORS.text;
-		ctx.font = '12px -apple-system, BlinkMacSystemFont, sans-serif';
+		ctx.font = '600 12px Quicksand, sans-serif';
 		ctx.textAlign = 'center';
 		ctx.fillText('Age', pad.left + cw / 2, h - 4);
 
@@ -263,8 +263,8 @@
 
 			// Label
 			const lastCurve = curves[curves.length - 1];
-			ctx.fillStyle = p === 2 ? '#7ba8d0' : p === 1 || p === 3 ? '#a0b8d4' : '#bbb';
-			ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+			ctx.fillStyle = p === 2 ? '#5bb890' : p === 1 || p === 3 ? '#a8e0c8' : '#c4bbb0';
+			ctx.font = '10px Nunito, sans-serif';
 			ctx.textAlign = 'left';
 			ctx.fillText(`${PERCENTILE_LINES[p]}th`, x(lastCurve.month) + 4, y(lastCurve.values[p]) + 3);
 		}
@@ -307,7 +307,7 @@
 				const pct = lms ? getPercentile(sorted[i].value, lms) : null;
 
 				ctx.fillStyle = COLORS.dataLine;
-				ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+				ctx.font = 'bold 11px Nunito, sans-serif';
 				ctx.textAlign = 'center';
 				const pctText = pct !== null ? `${Math.round(pct)}%` : '';
 				ctx.fillText(pctText, px, py - 10);
@@ -431,7 +431,7 @@
 			ctx.fill('evenodd');
 
 			// Selection border
-			ctx.strokeStyle = 'rgba(91, 155, 213, 0.7)';
+			ctx.strokeStyle = 'rgba(91, 184, 144, 0.7)';
 			ctx.lineWidth = 1.5;
 			ctx.setLineDash([4, 3]);
 			ctx.strokeRect(left, top, width, height);
@@ -457,7 +457,7 @@
 	{#if isZoomed}
 		<button
 			onclick={resetZoom}
-			class="absolute top-2 right-2 px-2.5 py-1 bg-white/90 border border-stone-200 rounded-lg text-xs font-medium text-stone-600 hover:bg-stone-50 hover:text-stone-900 transition-all cursor-pointer shadow-sm backdrop-blur-sm"
+			class="absolute top-2 right-2 px-2.5 py-1 bg-white/90 border border-[var(--cream-200)] rounded-[var(--radius-sm)] text-xs font-semibold text-[var(--cream-600)] hover:bg-[var(--cream-100)] hover:text-[var(--cream-700)] transition-all cursor-pointer shadow-sm backdrop-blur-sm"
 		>
 			Reset Zoom
 		</button>

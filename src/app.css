@@ -1,12 +1,170 @@
 @import 'tailwindcss';
 
 :root {
-	--primary: #e8785c;
-	--primary-hover: #d4654a;
-	--boy: #5b9bd5;
-	--girl: #e88cb4;
+	/* Primary palette — warm peach */
+	--peach-50: #fef7f4;
+	--peach-100: #fdeee8;
+	--peach-200: #fbd5c8;
+	--peach-300: #f7b9a5;
+	--peach-400: #f09a7d;
+	--peach-500: #e8785c;
+	--peach-600: #d4654a;
+
+	/* Accent — soft mint */
+	--mint-50: #f0faf6;
+	--mint-100: #d5f0e5;
+	--mint-200: #a8e0c8;
+	--mint-300: #7ccfab;
+	--mint-400: #5bb890;
+	--mint-500: #3da077;
+
+	/* Gender colors — softer versions */
+	--boy: #7eb8e0;
+	--boy-bg: #eef5fb;
+	--girl: #e8a0c0;
+	--girl-bg: #fdf0f5;
+
+	/* Neutrals — warm cream tones */
+	--cream-50: #fdfcfa;
+	--cream-100: #f9f6f2;
+	--cream-200: #f0ece5;
+	--cream-300: #e2dbd0;
+	--cream-400: #c4bbb0;
+	--cream-500: #9e958a;
+	--cream-600: #756d63;
+	--cream-700: #544e46;
+
+	/* Semantic */
+	--primary: var(--peach-500);
+	--primary-hover: var(--peach-600);
+	--accent: var(--mint-400);
+	--bg: var(--cream-50);
+	--card: #ffffff;
+	--border: var(--cream-200);
+	--text: var(--cream-700);
+	--text-muted: var(--cream-500);
+
+	/* Shadows */
+	--shadow-sm: 0 1px 3px rgba(84, 78, 70, 0.06), 0 1px 2px rgba(84, 78, 70, 0.04);
+	--shadow-md: 0 4px 12px rgba(84, 78, 70, 0.08), 0 2px 4px rgba(84, 78, 70, 0.04);
+	--shadow-lg: 0 12px 32px rgba(84, 78, 70, 0.1), 0 4px 8px rgba(84, 78, 70, 0.05);
+
+	/* Radii */
+	--radius: 16px;
+	--radius-sm: 10px;
+	--radius-lg: 24px;
 }
 
 body {
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+	font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	color: var(--text);
+	background: var(--bg);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: 'Quicksand', 'Nunito', sans-serif;
+}
+
+/* Smooth page transitions */
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+	animation: fadeIn 0.4s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+	width: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--cream-100);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--cream-300);
+	border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--cream-400);
+}
+
+/* Focus styles */
+input:focus, select:focus, textarea:focus {
+	outline: none;
+	border-color: var(--peach-300) !important;
+	box-shadow: 0 0 0 3px rgba(232, 120, 92, 0.12) !important;
+}
+
+/* Button base styles */
+.btn-primary {
+	background: var(--primary);
+	color: white;
+	font-weight: 700;
+	border-radius: var(--radius-sm);
+	transition: all 0.2s ease;
+	cursor: pointer;
+	font-family: 'Quicksand', sans-serif;
+}
+
+.btn-primary:hover {
+	background: var(--primary-hover);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+	transform: translateY(0);
+}
+
+.btn-secondary {
+	background: var(--cream-100);
+	color: var(--cream-600);
+	font-weight: 600;
+	border: 1px solid var(--cream-200);
+	border-radius: var(--radius-sm);
+	transition: all 0.2s ease;
+	cursor: pointer;
+	font-family: 'Quicksand', sans-serif;
+}
+
+.btn-secondary:hover {
+	background: var(--cream-200);
+}
+
+/* Card style */
+.card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
+}
+
+/* Input style */
+.input {
+	width: 100%;
+	padding: 0.625rem 0.875rem;
+	border: 1.5px solid var(--cream-200);
+	border-radius: var(--radius-sm);
+	font-size: 0.875rem;
+	font-family: 'Nunito', sans-serif;
+	color: var(--text);
+	background: white;
+	transition: all 0.2s ease;
+}
+
+.input::placeholder {
+	color: var(--cream-400);
+}
+
+/* Subtle dot pattern for backgrounds */
+.bg-pattern {
+	background-image: radial-gradient(circle at 20px 20px, var(--cream-200) 1px, transparent 1px);
+	background-size: 40px 40px;
 }

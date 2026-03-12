@@ -16,6 +16,7 @@ export const children = pgTable('children', {
 	name: text('name').notNull(),
 	sex: text('sex', { enum: ['boy', 'girl'] }).notNull(),
 	dateOfBirth: date('date_of_birth').notNull(),
+	photoUrl: text('photo_url'),
 	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
