@@ -6,8 +6,13 @@
 	let showAddChild = $state(false);
 	let selectedSex = $state<'boy' | 'girl'>('boy');
 
+	function parseLocalDate(s: string): Date {
+		const [y, m, d] = s.split('-').map(Number);
+		return new Date(y, m - 1, d);
+	}
+
 	function getAge(dob: string): string {
-		const birth = new Date(dob);
+		const birth = parseLocalDate(dob);
 		const now = new Date();
 		const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
 		if (months < 1) {

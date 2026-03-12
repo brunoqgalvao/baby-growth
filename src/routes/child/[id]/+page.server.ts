@@ -58,6 +58,41 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
+	updateMeasurement: async ({ request, params, locals }) => {
+		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
+
+		const [child] = await db
+			.select()
+			.from(children)
+			.where(and(eq(children.id, params.id), eq(children.userId, locals.userId)))
+			.limit(1);
+
+		if (!child) return fail(404, { error: 'Child not found' });
+
+		const form = await request.formData();
+		const measurementId = form.get('measurementId') as string;
+		const date = form.get('date') as string;
+		const weightKg = parseFloat(form.get('weightKg') as string) || null;
+		const heightCm = parseFloat(form.get('heightCm') as string) || null;
+		const headCircCm = parseFloat(form.get('headCircCm') as string) || null;
+
+		if (!date) return fail(400, { error: 'Date is required' });
+		if (!weightKg && !heightCm && !headCircCm) {
+			return fail(400, { error: 'At least one measurement is required' });
+		}
+
+		await db.update(measurements).set({
+			date,
+			weightKg,
+			heightCm,
+			headCircCm
+		}).where(
+			and(eq(measurements.id, measurementId), eq(measurements.childId, child.id))
+		);
+
+		return { success: true };
+	},
+
 	deleteMeasurement: async ({ request, params, locals }) => {
 		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
 

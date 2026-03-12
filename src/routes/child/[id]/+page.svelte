@@ -7,15 +7,21 @@
 
 	let { data }: { data: PageData } = $props();
 	let showAddMeasurement = $state(false);
+	let editingMeasurement = $state<typeof data.measurements[number] | null>(null);
 	let activeChart = $state<MeasurementType>('weight');
 	let standard = $state<Standard>('who');
 
 	const child = $derived(data.child);
 	const sex = $derived(child.sex as 'boy' | 'girl');
 
+	function parseLocalDate(s: string): Date {
+		const [y, m, d] = s.split('-').map(Number);
+		return new Date(y, m - 1, d);
+	}
+
 	function getAgeMonths(date: string): number {
-		const birth = new Date(child.dateOfBirth);
-		const d = new Date(date);
+		const birth = parseLocalDate(child.dateOfBirth);
+		const d = parseLocalDate(date);
 		return (d.getFullYear() - birth.getFullYear()) * 12 + (d.getMonth() - birth.getMonth()) + (d.getDate() - birth.getDate()) / 30;
 	}
 
@@ -29,7 +35,7 @@
 	}
 
 	function getAge(): string {
-		const birth = new Date(child.dateOfBirth);
+		const birth = parseLocalDate(child.dateOfBirth);
 		const now = new Date();
 		const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
 		if (months < 1) {
@@ -51,8 +57,14 @@
 			})
 			.map((m) => ({
 				month: Math.max(0, getAgeMonths(m.date)),
-				value: type === 'weight' ? m.weightKg! : type === 'height' ? m.heightCm! : m.headCircCm!
+				value: type === 'weight' ? m.weightKg! : type === 'height' ? m.heightCm! : m.headCircCm!,
+				id: m.id
 			}));
+	}
+
+	function handlePointDblClick(id: string) {
+		const m = data.measurements.find((m) => m.id === id);
+		if (m) editingMeasurement = m;
 	}
 
 	function getLatestPercentile(type: MeasurementType): string | null {
@@ -75,7 +87,7 @@
 	}
 
 	function formatDate(d: string): string {
-		return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+		return parseLocalDate(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 	}
 
 	const today = new Date().toISOString().split('T')[0];
@@ -170,6 +182,7 @@
 			{standard}
 			measurementType={activeChart}
 			dataPoints={makeChartData(activeChart)}
+			onpointdblclick={handlePointDblClick}
 		/>
 
 		<!-- Legend -->
@@ -220,7 +233,12 @@
 								<td class="py-3 px-3">{m.weightKg ? `${m.weightKg} kg` : '—'}</td>
 								<td class="py-3 px-3">{m.heightCm ? `${m.heightCm} cm` : '—'}</td>
 								<td class="py-3 px-3">{m.headCircCm ? `${m.headCircCm} cm` : '—'}</td>
-								<td class="py-3 px-3">
+								<td class="py-3 px-3 flex gap-1">
+									<button
+										onclick={() => editingMeasurement = m}
+										class="text-stone-400 hover:text-blue-500 cursor-pointer"
+										title="Edit"
+									>✏️</button>
 									<form method="POST" action="?/deleteMeasurement" use:enhance>
 										<input type="hidden" name="measurementId" value={m.id} />
 										<button type="submit" class="text-stone-400 hover:text-red-500 cursor-pointer" title="Delete">🗑️</button>
@@ -270,8 +288,8 @@
 						id="weight"
 						name="weightKg"
 						type="number"
-						step="0.1"
-						placeholder="e.g. 8.2"
+						step="0.001"
+						placeholder="e.g. 8.250"
 						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
 					/>
 				</div>
@@ -315,6 +333,98 @@
 						class="px-5 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold text-sm hover:bg-[var(--primary-hover)] transition-all cursor-pointer"
 					>
 						Save
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
+<!-- Edit Measurement Modal -->
+{#if editingMeasurement}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
+	<div
+		class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center backdrop-blur-sm"
+		onclick={(e) => { if (e.target === e.currentTarget) editingMeasurement = null }}
+		role="dialog"
+	>
+		<div class="bg-white rounded-2xl p-7 w-[90%] max-w-md shadow-xl">
+			<h2 class="text-xl font-bold mb-5">Edit Measurement</h2>
+
+			<form method="POST" action="?/updateMeasurement" use:enhance={() => {
+				return async ({ update }) => {
+					await update();
+					editingMeasurement = null;
+				};
+			}}>
+				<input type="hidden" name="measurementId" value={editingMeasurement.id} />
+
+				<div class="mb-4">
+					<label for="edit-date" class="block text-sm font-semibold mb-1.5">Date</label>
+					<input
+						id="edit-date"
+						name="date"
+						type="date"
+						value={editingMeasurement.date}
+						required
+						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
+					/>
+				</div>
+
+				<div class="mb-4">
+					<label for="edit-weight" class="block text-sm font-semibold mb-1.5">Weight (kg)</label>
+					<input
+						id="edit-weight"
+						name="weightKg"
+						type="number"
+						step="0.001"
+						value={editingMeasurement.weightKg ?? ''}
+						placeholder="e.g. 8.250"
+						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
+					/>
+				</div>
+
+				<div class="mb-4">
+					<label for="edit-height" class="block text-sm font-semibold mb-1.5">Height (cm)</label>
+					<input
+						id="edit-height"
+						name="heightCm"
+						type="number"
+						step="0.1"
+						value={editingMeasurement.heightCm ?? ''}
+						placeholder="e.g. 70"
+						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
+					/>
+				</div>
+
+				<div class="mb-4">
+					<label for="edit-head" class="block text-sm font-semibold mb-1.5">Head Circumference (cm)</label>
+					<input
+						id="edit-head"
+						name="headCircCm"
+						type="number"
+						step="0.1"
+						value={editingMeasurement.headCircCm ?? ''}
+						placeholder="e.g. 44.5"
+						class="w-full px-3.5 py-2.5 border border-stone-200 rounded-lg text-sm focus:outline-none focus:border-[var(--primary)]"
+					/>
+				</div>
+
+				<p class="text-xs text-stone-400 mb-4">You don't need to fill all fields — log what you have!</p>
+
+				<div class="flex justify-end gap-2">
+					<button
+						type="button"
+						onclick={() => editingMeasurement = null}
+						class="px-5 py-2.5 bg-stone-100 text-stone-700 rounded-lg font-semibold text-sm border border-stone-200 hover:bg-stone-200 transition-all cursor-pointer"
+					>
+						Cancel
+					</button>
+					<button
+						type="submit"
+						class="px-5 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold text-sm hover:bg-[var(--primary-hover)] transition-all cursor-pointer"
+					>
+						Update
 					</button>
 				</div>
 			</form>

@@ -14,21 +14,25 @@
 	interface DataPoint {
 		month: number;
 		value: number;
+		id?: string;
 	}
 
 	let {
 		sex,
 		standard = 'who',
 		measurementType = 'weight',
-		dataPoints = []
+		dataPoints = [],
+		onpointdblclick
 	}: {
 		sex: Sex;
 		standard?: Standard;
 		measurementType?: MeasurementType;
 		dataPoints?: DataPoint[];
+		onpointdblclick?: (id: string) => void;
 	} = $props();
 
 	let canvas: HTMLCanvasElement;
+	let pointPositions: { x: number; y: number; id?: string }[] = [];
 
 	const COLORS = {
 		percentile3: '#d4d0cb',
@@ -207,6 +211,7 @@
 		}
 
 		// Draw data line
+		pointPositions = [];
 		if (dataPoints.length > 0) {
 			const sorted = [...dataPoints].sort((a, b) => a.month - b.month);
 
@@ -227,6 +232,8 @@
 			for (let i = 0; i < sorted.length; i++) {
 				const px = x(sorted[i].month);
 				const py = y(sorted[i].value);
+
+				pointPositions.push({ x: px, y: py, id: sorted[i].id });
 
 				ctx.beginPath();
 				ctx.arc(px, py, 5, 0, Math.PI * 2);
@@ -263,6 +270,35 @@
 	function handleResize() {
 		drawChart();
 	}
+
+	function getCanvasCoords(e: MouseEvent): { cx: number; cy: number } {
+		const rect = canvas.getBoundingClientRect();
+		return { cx: e.clientX - rect.left, cy: e.clientY - rect.top };
+	}
+
+	function findPointAt(cx: number, cy: number): string | undefined {
+		const hitRadius = 12;
+		for (const pt of pointPositions) {
+			const dx = cx - pt.x;
+			const dy = cy - pt.y;
+			if (dx * dx + dy * dy <= hitRadius * hitRadius && pt.id) {
+				return pt.id;
+			}
+		}
+		return undefined;
+	}
+
+	function handleDblClick(e: MouseEvent) {
+		if (!onpointdblclick) return;
+		const { cx, cy } = getCanvasCoords(e);
+		const id = findPointAt(cx, cy);
+		if (id) onpointdblclick(id);
+	}
+
+	function handleMouseMove(e: MouseEvent) {
+		const { cx, cy } = getCanvasCoords(e);
+		canvas.style.cursor = findPointAt(cx, cy) ? 'pointer' : 'default';
+	}
 </script>
 
 <svelte:window onresize={handleResize} />
@@ -272,5 +308,7 @@
 		bind:this={canvas}
 		class="w-full"
 		style="height: 350px"
+		ondblclick={handleDblClick}
+		onmousemove={handleMouseMove}
 	></canvas>
 </div>
