@@ -1,9 +1,11 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import OpenAI from 'openai';
-import { OPENAI_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+function getOpenAI() {
+	return new OpenAI({ apiKey: env.OPENAI_API_KEY });
+}
 
 const EXTRACTION_PROMPT = `You are a baby measurement extractor. From the user's input, extract any baby/infant measurement data.
 
@@ -25,7 +27,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	if (!OPENAI_API_KEY) {
+	if (!env.OPENAI_API_KEY) {
 		return json({ error: 'OpenAI API key not configured' }, { status: 500 });
 	}
 
@@ -67,7 +69,7 @@ async function handleVoice(formData: FormData): Promise<Response> {
 	}
 
 	// Step 1: Transcribe with Whisper
-	const transcription = await openai.audio.transcriptions.create({
+	const transcription = await getOpenAI().audio.transcriptions.create({
 		model: 'whisper-1',
 		file: audioFile,
 		language: 'en'
@@ -91,7 +93,7 @@ async function handleImage(formData: FormData): Promise<Response> {
 	const base64 = Buffer.from(buffer).toString('base64');
 	const mimeType = imageFile.type || 'image/jpeg';
 
-	const completion = await openai.chat.completions.create({
+	const completion = await getOpenAI().chat.completions.create({
 		model: 'gpt-4o-mini',
 		messages: [
 			{ role: 'system', content: EXTRACTION_PROMPT },
@@ -122,7 +124,7 @@ async function handleText(text: string): Promise<Response> {
 }
 
 async function parseWithGPT(text: string): Promise<Record<string, unknown>> {
-	const completion = await openai.chat.completions.create({
+	const completion = await getOpenAI().chat.completions.create({
 		model: 'gpt-4o-mini',
 		messages: [
 			{ role: 'system', content: EXTRACTION_PROMPT },
