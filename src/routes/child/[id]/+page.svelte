@@ -14,6 +14,11 @@
 	let inviteUrl = $state('');
 	let inviteCopied = $state(false);
 	let showInvitePanel = $state(false);
+	let savingMeasurement = $state(false);
+	let updatingMeasurement = $state(false);
+	let deletingMeasurementId = $state<string | null>(null);
+	let generatingInvite = $state(false);
+	let showHistory = $state(false);
 
 	$effect(() => {
 		if (form?.inviteToken) {
@@ -165,7 +170,7 @@
 		const lmsData = getLMSData(standard, sex, type);
 		const lms = interpolateLMS(last.month, lmsData);
 		if (!lms) return null;
-		return `P${Math.round(getPercentile(last.value, lms))}`;
+		return `${Math.round(getPercentile(last.value, lms))}%`;
 	}
 
 	function getLatestValue(type: MeasurementType): string | null {
@@ -339,12 +344,23 @@
 						{form.error}
 					</div>
 				{/if}
-				<form method="POST" action="?/createInvite" use:enhance>
-					<button type="submit" class="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2">
-						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-						</svg>
-						Generate Invite Link
+				<form method="POST" action="?/createInvite" use:enhance={() => {
+					generatingInvite = true;
+					return async ({ update }) => {
+						await update();
+						generatingInvite = false;
+					};
+				}}>
+					<button type="submit" disabled={generatingInvite} class="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+						{#if generatingInvite}
+							<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+							Generating...
+						{:else}
+							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+							</svg>
+							Generate Invite Link
+						{/if}
 					</button>
 				</form>
 			{/if}
@@ -422,9 +438,9 @@
 
 		<!-- Legend -->
 		<div class="flex gap-5 mt-4 flex-wrap text-xs text-[var(--cream-500)]">
-			<div class="flex items-center gap-1.5"><div class="w-5 h-0.5 bg-[var(--cream-300)] rounded"></div> 3rd / 97th</div>
-			<div class="flex items-center gap-1.5"><div class="w-5 h-0.5 bg-[var(--boy)] rounded opacity-60"></div> 15th / 85th</div>
-			<div class="flex items-center gap-1.5"><div class="w-5 h-[2px] bg-[var(--boy)] rounded"></div> 50th</div>
+			<div class="flex items-center gap-1.5"><div class="w-5 h-0.5 rounded" style="background: #e2dbd0"></div> 3% / 97%</div>
+			<div class="flex items-center gap-1.5"><div class="w-5 h-0.5 rounded" style="background: #a8e0c8"></div> 15% / 85%</div>
+			<div class="flex items-center gap-1.5"><div class="w-5 h-[2px] rounded" style="background: #5bb890"></div> 50%</div>
 			<div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-[var(--primary)]"></div> {child.name}</div>
 		</div>
 
@@ -436,78 +452,127 @@
 		{/if}
 	</div>
 
-	<!-- Measurements table -->
-	<div class="card p-6">
-		<div class="flex items-center justify-between mb-5">
-			<h2 class="text-lg font-bold text-[var(--cream-700)]">Measurement History</h2>
-			<button
-				onclick={() => { resetAddForm(); showAddMeasurement = true; }}
-				class="btn-primary px-4 py-2 text-sm flex items-center gap-1.5"
-			>
-				<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-				Add
-			</button>
+	<!-- Share with partner CTA -->
+	<div class="card p-5 mb-5 flex items-center gap-4">
+		<div class="w-10 h-10 rounded-full bg-[var(--peach-50)] flex items-center justify-center shrink-0">
+			<svg class="w-5 h-5 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+			</svg>
 		</div>
+		<div class="flex-1 min-w-0">
+			<p class="text-sm font-bold text-[var(--cream-700)]">Share with your partner</p>
+			<p class="text-xs text-[var(--cream-500)]">Let them view and log {child.name}'s measurements too</p>
+		</div>
+		<button
+			onclick={() => showInvitePanel = !showInvitePanel}
+			class="btn-primary px-4 py-2 text-sm shrink-0 flex items-center gap-1.5"
+		>
+			<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+			</svg>
+			Share
+		</button>
+	</div>
 
-		{#if data.measurements.length === 0}
-			<div class="text-center py-12">
-				<div class="w-16 h-16 mx-auto rounded-full bg-[var(--cream-100)] flex items-center justify-center text-2xl mb-3">📏</div>
-				<p class="text-[var(--cream-500)] text-sm">No measurements yet</p>
-				<p class="text-[var(--cream-400)] text-xs mt-1">Add one to get started!</p>
+	<!-- Measurements table (collapsible) -->
+	<div class="card">
+		<button
+			onclick={() => showHistory = !showHistory}
+			class="w-full flex items-center justify-between p-5 cursor-pointer hover:bg-[var(--cream-50)] transition-colors rounded-[var(--radius)]"
+		>
+			<div class="flex items-center gap-2">
+				<h2 class="text-lg font-bold text-[var(--cream-700)]">Measurement History</h2>
+				{#if data.measurements.length > 0}
+					<span class="px-2 py-0.5 bg-[var(--cream-100)] rounded-full text-xs font-bold text-[var(--cream-500)]">{data.measurements.length}</span>
+				{/if}
 			</div>
-		{:else}
-			<div class="overflow-x-auto">
-				<table class="w-full text-sm">
-					<thead>
-						<tr class="border-b-2 border-[var(--cream-200)]">
-							<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Date</th>
-							<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Age</th>
-							<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Weight</th>
-							<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Height</th>
-							<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Head</th>
-							<th class="py-2.5 px-3"></th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each [...data.measurements].reverse() as m}
-							<tr class="border-b border-[var(--cream-100)] hover:bg-[var(--cream-50)] transition-colors">
-								<td class="py-3 px-3 font-medium text-[var(--cream-700)]">{formatDate(m.date)}</td>
-								<td class="py-3 px-3 text-[var(--cream-500)]">{getAgeLabel(m.date)}</td>
-								<td class="py-3 px-3">{m.weightKg ? `${m.weightKg} kg` : '---'}</td>
-								<td class="py-3 px-3">{m.heightCm ? `${m.heightCm} cm` : '---'}</td>
-								<td class="py-3 px-3">{m.headCircCm ? `${m.headCircCm} cm` : '---'}</td>
-								<td class="py-3 px-3 flex gap-1">
-									<button
-										onclick={() => editingMeasurement = m}
-										class="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--cream-400)] hover:text-[var(--boy)] hover:bg-[var(--boy-bg)] cursor-pointer transition-all"
-										title="Edit"
-									>
-										<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-									</button>
-									<form method="POST" action="?/deleteMeasurement" use:enhance>
-										<input type="hidden" name="measurementId" value={m.id} />
-										<button type="submit" class="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--cream-400)] hover:text-red-400 hover:bg-red-50 cursor-pointer transition-all" title="Delete">
-											<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-										</button>
-									</form>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
+			<svg class="w-5 h-5 text-[var(--cream-400)] transition-transform {showHistory ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+		</button>
+
+		{#if showHistory}
+			<div class="px-6 pb-6">
+				{#if data.measurements.length === 0}
+					<div class="text-center py-12">
+						<div class="w-16 h-16 mx-auto rounded-full bg-[var(--cream-100)] flex items-center justify-center text-2xl mb-3">📏</div>
+						<p class="text-[var(--cream-500)] text-sm">No measurements yet</p>
+						<p class="text-[var(--cream-400)] text-xs mt-1">Add one to get started!</p>
+					</div>
+				{:else}
+					<div class="overflow-x-auto">
+						<table class="w-full text-sm">
+							<thead>
+								<tr class="border-b-2 border-[var(--cream-200)]">
+									<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Date</th>
+									<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Age</th>
+									<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Weight</th>
+									<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Height</th>
+									<th class="text-left py-2.5 px-3 text-xs font-bold uppercase tracking-wider text-[var(--cream-500)]">Head</th>
+									<th class="py-2.5 px-3"></th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each [...data.measurements].reverse() as m}
+									<tr class="border-b border-[var(--cream-100)] hover:bg-[var(--cream-50)] transition-colors">
+										<td class="py-3 px-3 font-medium text-[var(--cream-700)]">{formatDate(m.date)}</td>
+										<td class="py-3 px-3 text-[var(--cream-500)]">{getAgeLabel(m.date)}</td>
+										<td class="py-3 px-3">{m.weightKg ? `${m.weightKg} kg` : '---'}</td>
+										<td class="py-3 px-3">{m.heightCm ? `${m.heightCm} cm` : '---'}</td>
+										<td class="py-3 px-3">{m.headCircCm ? `${m.headCircCm} cm` : '---'}</td>
+										<td class="py-3 px-3 flex gap-1">
+											<button
+												onclick={() => editingMeasurement = m}
+												class="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--cream-400)] hover:text-[var(--boy)] hover:bg-[var(--boy-bg)] cursor-pointer transition-all"
+												title="Edit"
+											>
+												<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+											</button>
+											<form method="POST" action="?/deleteMeasurement" use:enhance={() => {
+												deletingMeasurementId = m.id;
+												return async ({ update }) => {
+													await update();
+													deletingMeasurementId = null;
+												};
+											}}>
+												<input type="hidden" name="measurementId" value={m.id} />
+												<button type="submit" disabled={deletingMeasurementId === m.id} class="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--cream-400)] hover:text-red-400 hover:bg-red-50 cursor-pointer transition-all disabled:opacity-50" title="Delete">
+													{#if deletingMeasurementId === m.id}
+														<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+													{:else}
+														<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+													{/if}
+												</button>
+											</form>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</div>
 </div>
 
 <!-- Mobile bottom bar -->
-<div class="fixed bottom-0 left-0 right-0 sm:hidden z-40 bg-white/95 backdrop-blur-md border-t border-[var(--cream-200)] flex justify-center py-3">
+<div class="fixed bottom-0 left-0 right-0 sm:hidden z-40 bg-white/95 backdrop-blur-md border-t border-[var(--cream-200)] flex items-center px-5 py-3">
 	<button
-		onclick={() => { resetAddForm(); showAddMeasurement = true; }}
-		class="btn-primary w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_16px_rgba(232,120,92,0.35)]"
+		onclick={() => showInvitePanel = !showInvitePanel}
+		class="w-9 h-9 rounded-full flex items-center justify-center text-[var(--cream-400)] hover:text-[var(--cream-600)] transition-colors cursor-pointer"
 	>
-		<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+		<svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+			<path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+		</svg>
 	</button>
+	<div class="flex-1 flex justify-center">
+		<button
+			onclick={() => { resetAddForm(); showAddMeasurement = true; }}
+			class="btn-primary w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_16px_rgba(232,120,92,0.35)]"
+		>
+			<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+		</button>
+	</div>
+	<div class="w-9"></div>
 </div>
 
 <!-- Add Measurement: Bottom Sheet (mobile) / Centered Modal (desktop) -->
@@ -548,8 +613,10 @@
 				<!-- Parsed values as editable chips -->
 				{#if addWeight || addHeight || addHead}
 					<form method="POST" action="?/addMeasurement" use:enhance={() => {
+						savingMeasurement = true;
 						return async ({ update }) => {
 							await update();
+							savingMeasurement = false;
 							showAddMeasurement = false;
 						};
 					}}>
@@ -617,10 +684,16 @@
 							<!-- Save button -->
 							<button
 								type="submit"
-								class="w-full btn-primary py-3 text-sm flex items-center justify-center gap-2"
+								disabled={savingMeasurement}
+								class="w-full btn-primary py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
 							>
-								<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-								Save Measurement
+								{#if savingMeasurement}
+									<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+									Saving...
+								{:else}
+									<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+									Save Measurement
+								{/if}
 							</button>
 						</div>
 					</form>
@@ -640,8 +713,10 @@
 				<!-- Manual form (hidden by default) -->
 				{#if showManualForm && !addWeight && !addHeight && !addHead}
 					<form method="POST" action="?/addMeasurement" use:enhance={() => {
+						savingMeasurement = true;
 						return async ({ update }) => {
 							await update();
+							savingMeasurement = false;
 							showAddMeasurement = false;
 							showManualForm = false;
 						};
@@ -675,7 +750,14 @@
 							</div>
 						</div>
 
-						<button type="submit" class="w-full btn-primary py-3 text-sm">Save Measurement</button>
+						<button type="submit" disabled={savingMeasurement} class="w-full btn-primary py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+							{#if savingMeasurement}
+								<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+								Saving...
+							{:else}
+								Save Measurement
+							{/if}
+						</button>
 					</form>
 				{/if}
 			</div>
@@ -713,8 +795,10 @@
 				</div>
 
 				<form method="POST" action="?/updateMeasurement" use:enhance={() => {
+					updatingMeasurement = true;
 					return async ({ update }) => {
 						await update();
+						updatingMeasurement = false;
 						editingMeasurement = null;
 					};
 				}}>
@@ -790,10 +874,16 @@
 					<div class="flex flex-col sm:flex-row sm:justify-end gap-2">
 						<button
 							type="submit"
-							class="w-full sm:w-auto btn-primary px-5 py-3 sm:py-2.5 text-sm flex items-center justify-center gap-2 order-1 sm:order-2"
+							disabled={updatingMeasurement}
+							class="w-full sm:w-auto btn-primary px-5 py-3 sm:py-2.5 text-sm flex items-center justify-center gap-2 order-1 sm:order-2 disabled:opacity-60"
 						>
-							<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-							Update
+							{#if updatingMeasurement}
+								<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+								Updating...
+							{:else}
+								<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+								Update
+							{/if}
 						</button>
 						<button
 							type="button"

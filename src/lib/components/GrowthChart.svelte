@@ -261,12 +261,33 @@
 			}
 			ctx.stroke();
 
-			// Label
+			// Label at end of line
 			const lastCurve = curves[curves.length - 1];
-			ctx.fillStyle = p === 2 ? '#5bb890' : p === 1 || p === 3 ? '#a8e0c8' : '#c4bbb0';
-			ctx.font = '10px Nunito, sans-serif';
+			ctx.fillStyle = PERCENTILE_COLORS[p];
+			ctx.font = '600 10px Nunito, sans-serif';
 			ctx.textAlign = 'left';
-			ctx.fillText(`${PERCENTILE_LINES[p]}th`, x(lastCurve.month) + 4, y(lastCurve.values[p]) + 3);
+			ctx.fillText(`${PERCENTILE_LINES[p]}%`, x(lastCurve.month) + 4, y(lastCurve.values[p]) + 3);
+
+			// Inline label near the visible midpoint of the curve
+			const visibleCurves = curves.filter((c) => c.month >= xMin && c.month <= maxMonths);
+			if (visibleCurves.length > 4) {
+				const midIdx = Math.floor(visibleCurves.length * 0.55);
+				const midCurve = visibleCurves[midIdx];
+				const labelText = `${PERCENTILE_LINES[p]}%`;
+				ctx.font = '600 9px Nunito, sans-serif';
+				const textWidth = ctx.measureText(labelText).width;
+				const lx = x(midCurve.month);
+				const ly = y(midCurve.values[p]);
+				// Background pill for readability
+				ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+				ctx.beginPath();
+				ctx.roundRect(lx - textWidth / 2 - 3, ly - 6, textWidth + 6, 12, 3);
+				ctx.fill();
+				// Text
+				ctx.fillStyle = PERCENTILE_COLORS[p];
+				ctx.textAlign = 'center';
+				ctx.fillText(labelText, lx, ly + 3);
+			}
 		}
 
 		// Draw data line

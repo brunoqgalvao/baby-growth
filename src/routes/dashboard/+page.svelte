@@ -9,6 +9,57 @@
 	let photoFile = $state<File | null>(null);
 	let uploadingPhoto = $state(false);
 	let showPartnerPanel = $state(false);
+	let showSignOut = $state(false);
+	let openMenuId = $state<string | null>(null);
+	let deleteTarget = $state<{ id: string; name: string } | null>(null);
+	let shareUrl = $state<string | null>(null);
+	let shareChildName = $state<string | null>(null);
+	let sharingChildId = $state<string | null>(null);
+	let signingOut = $state(false);
+	let addingChild = $state(false);
+	let deletingChild = $state(false);
+
+	function toggleMenu(childId: string, e: MouseEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		openMenuId = openMenuId === childId ? null : childId;
+	}
+
+	function closeMenus() {
+		openMenuId = null;
+	}
+
+	async function handleShare(childId: string, childName: string) {
+		openMenuId = null;
+		sharingChildId = childId;
+		shareChildName = childName;
+		shareUrl = null;
+		try {
+			const form = new FormData();
+			const res = await fetch(`/child/${childId}?/createInvite`, {
+				method: 'POST',
+				body: form
+			});
+			const result = await res.json();
+			// SvelteKit returns { type, data } shape
+			const data = result?.data;
+			if (data) {
+				// data is a serialised array — first entry [1] holds the actual payload
+				const payload = Array.isArray(data) ? data[1] : data;
+				const token = payload?.inviteToken;
+				if (token) {
+					shareUrl = `${window.location.origin}/invite/${token}`;
+				}
+			}
+		} catch {
+			// fallback — just show the share modal with an error state
+		}
+	}
+
+	async function copyShareUrl() {
+		if (!shareUrl) return;
+		await navigator.clipboard.writeText(shareUrl);
+	}
 
 	function handlePhotoSelect(e: Event) {
 		const input = e.target as HTMLInputElement;
@@ -76,9 +127,10 @@
 		<img src="/favicon.png" alt="" class="w-8 h-8" />
 		<span class="text-xl font-bold text-[var(--cream-700)]">Baby<span class="text-[var(--primary)]">Growth</span></span>
 	</a>
-	<form method="POST" action="/logout" use:enhance>
-		<button type="submit" class="text-sm text-[var(--cream-500)] hover:text-[var(--cream-700)] cursor-pointer transition-colors font-medium">Sign out</button>
-	</form>
+	<button
+		onclick={() => showSignOut = true}
+		class="text-sm text-[var(--cream-500)] hover:text-[var(--cream-700)] cursor-pointer transition-colors font-medium"
+	>Sign out</button>
 </nav>
 
 <div class="max-w-4xl mx-auto px-4 py-8 animate-in">
@@ -92,23 +144,23 @@
 		</p>
 	</div>
 
-	<div class="flex justify-between items-center mb-6">
+	<div class="flex flex-wrap justify-between items-center gap-3 mb-6">
 		<h2 class="text-lg font-bold text-[var(--cream-700)]">My Children</h2>
 		<div class="flex gap-2">
 			<button
 				onclick={() => showPartnerPanel = !showPartnerPanel}
-				class="btn-secondary px-4 py-2.5 text-sm flex items-center gap-1.5"
+				class="btn-secondary px-3 sm:px-4 py-2 sm:py-2.5 text-sm flex items-center gap-1.5"
 			>
-				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
 				</svg>
 				Partner
 			</button>
 			<button
 				onclick={() => showAddChild = true}
-				class="btn-primary px-5 py-2.5 text-sm flex items-center gap-1.5"
+				class="btn-primary px-3 sm:px-5 py-2 sm:py-2.5 text-sm flex items-center gap-1.5"
 			>
-				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+				<svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
 				Add Child
 			</button>
 		</div>
@@ -158,6 +210,46 @@
 				<!-- Top accent bar -->
 				<div class="absolute top-0 left-0 right-0 h-1 {child.sex === 'boy' ? 'bg-[var(--boy)]' : 'bg-[var(--girl)]'}"></div>
 
+				<!-- Three-dot menu -->
+				<div class="absolute top-3 right-3 z-10">
+					<button
+						onclick={(e) => toggleMenu(child.id, e)}
+						class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--cream-400)] hover:text-[var(--cream-600)] hover:bg-[var(--cream-100)] transition-all cursor-pointer"
+						aria-label="Options for {child.name}"
+					>
+						<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+					</button>
+
+					{#if openMenuId === child.id}
+						<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
+						<div
+							class="fixed inset-0 z-20"
+							onclick={closeMenus}
+							role="button"
+							aria-label="Close menu"
+						></div>
+						<div class="absolute right-0 top-9 w-44 bg-white rounded-[var(--radius-sm)] shadow-[var(--shadow-lg)] border border-[var(--cream-200)] py-1 z-30 animate-in">
+							<button
+								onclick={() => handleShare(child.id, child.name)}
+								class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--cream-700)] hover:bg-[var(--cream-50)] transition-colors cursor-pointer text-left"
+							>
+								<svg class="w-4 h-4 text-[var(--cream-500)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+								Share
+							</button>
+							{#if !child.isShared}
+								<div class="h-px bg-[var(--cream-200)] mx-2 my-1"></div>
+								<button
+									onclick={() => { openMenuId = null; deleteTarget = { id: child.id, name: child.name }; }}
+									class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer text-left"
+								>
+									<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+									Delete
+								</button>
+							{/if}
+						</div>
+					{/if}
+				</div>
+
 				<!-- Main clickable area -->
 				<a href="/child/{child.id}" class="block p-5 pb-3">
 					<div class="flex items-start gap-3">
@@ -170,7 +262,7 @@
 							</div>
 						{/if}
 
-						<div class="flex-1 min-w-0">
+						<div class="flex-1 min-w-0 pr-6">
 							<div class="flex items-center gap-2">
 								<span class="text-lg font-bold text-[var(--cream-700)] truncate">{child.name}</span>
 								{#if child.isShared}
@@ -181,9 +273,6 @@
 							</div>
 							<div class="text-sm text-[var(--cream-500)]">{getAge(child.dateOfBirth)}</div>
 						</div>
-
-						<!-- Chevron -->
-						<svg class="w-5 h-5 text-[var(--cream-300)] group-hover:text-[var(--cream-500)] group-hover:translate-x-0.5 transition-all shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
 					</div>
 
 					<!-- Metrics -->
@@ -266,6 +355,7 @@
 			<h2 class="text-xl font-bold text-[var(--cream-700)] mb-6">Add a Child</h2>
 
 			<form method="POST" action="?/addChild" use:enhance={() => {
+				addingChild = true;
 				return async ({ result, update }) => {
 					if (result.type === 'success' && photoFile && result.data?.childId) {
 						const childId = result.data.childId;
@@ -283,6 +373,7 @@
 						clearPhoto();
 					}
 					await update();
+					addingChild = false;
 					showAddChild = false;
 				};
 			}}>
@@ -374,12 +465,152 @@
 					</button>
 					<button
 						type="submit"
-						class="btn-primary px-5 py-2.5 text-sm"
+						disabled={addingChild}
+						class="btn-primary px-5 py-2.5 text-sm flex items-center gap-2 disabled:opacity-60"
 					>
-						Add Child
+						{#if addingChild}
+							<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+							Adding...
+						{:else}
+							Add Child
+						{/if}
 					</button>
 				</div>
 			</form>
+		</div>
+	</div>
+{/if}
+
+<!-- Delete Child Confirmation Modal -->
+{#if deleteTarget}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
+	<div
+		class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center backdrop-blur-sm"
+		onclick={(e) => { if (e.target === e.currentTarget) deleteTarget = null }}
+		role="dialog"
+	>
+		<div class="card p-8 w-[90%] max-w-sm shadow-[var(--shadow-lg)] animate-in text-center">
+			<div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+				<svg class="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+				</svg>
+			</div>
+			<h2 class="text-lg font-bold text-[var(--cream-700)] mb-1">Delete {deleteTarget.name}?</h2>
+			<p class="text-sm text-[var(--cream-500)] mb-6">This will permanently remove all their measurements and growth data. This can't be undone.</p>
+			<div class="flex gap-2">
+				<button
+					onclick={() => deleteTarget = null}
+					class="btn-secondary flex-1 py-2.5 text-sm"
+				>
+					Cancel
+				</button>
+				<form method="POST" action="?/deleteChild" use:enhance={() => {
+					deletingChild = true;
+					return async ({ update }) => {
+						await update();
+						deletingChild = false;
+						deleteTarget = null;
+					};
+				}}>
+					<input type="hidden" name="childId" value={deleteTarget.id} />
+					<button type="submit" disabled={deletingChild} class="btn-primary py-2.5 px-5 text-sm !bg-red-400 hover:!bg-red-500 flex items-center gap-2 disabled:opacity-60">
+						{#if deletingChild}
+							<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+							Deleting...
+						{:else}
+							Delete
+						{/if}
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Share Child Modal -->
+{#if shareChildName}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
+	<div
+		class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center backdrop-blur-sm"
+		onclick={(e) => { if (e.target === e.currentTarget) { shareChildName = null; shareUrl = null; sharingChildId = null; } }}
+		role="dialog"
+	>
+		<div class="card p-8 w-[90%] max-w-md shadow-[var(--shadow-lg)] animate-in text-center">
+			<div class="w-12 h-12 rounded-full bg-[var(--peach-50)] flex items-center justify-center mx-auto mb-4">
+				<svg class="w-6 h-6 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+			</div>
+			<h2 class="text-lg font-bold text-[var(--cream-700)] mb-1">Share {shareChildName}</h2>
+			<p class="text-sm text-[var(--cream-500)] mb-5">Send this link to your partner so they can view and log measurements too.</p>
+
+			{#if shareUrl}
+				<div class="flex items-center gap-2 bg-[var(--cream-50)] border border-[var(--cream-200)] rounded-[var(--radius-sm)] p-3">
+					<input
+						type="text"
+						readonly
+						value={shareUrl}
+						class="flex-1 bg-transparent text-sm text-[var(--cream-700)] outline-none truncate font-mono"
+					/>
+					<button
+						onclick={copyShareUrl}
+						class="btn-primary px-3 py-1.5 text-xs shrink-0"
+					>
+						Copy
+					</button>
+				</div>
+			{:else}
+				<div class="flex items-center justify-center gap-2 py-4 text-sm text-[var(--cream-400)]">
+					<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+					Generating link...
+				</div>
+			{/if}
+
+			<button
+				onclick={() => { shareChildName = null; shareUrl = null; sharingChildId = null; }}
+				class="btn-secondary w-full py-2.5 text-sm mt-4"
+			>
+				Done
+			</button>
+		</div>
+	</div>
+{/if}
+
+<!-- Sign Out Confirmation Modal -->
+{#if showSignOut}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
+	<div
+		class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center backdrop-blur-sm"
+		onclick={(e) => { if (e.target === e.currentTarget) showSignOut = false }}
+		role="dialog"
+	>
+		<div class="card p-8 w-[90%] max-w-sm shadow-[var(--shadow-lg)] animate-in text-center">
+			<div class="w-12 h-12 rounded-full bg-[var(--peach-50)] flex items-center justify-center mx-auto mb-4">
+				<svg class="w-6 h-6 text-[var(--primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/>
+				</svg>
+			</div>
+			<h2 class="text-lg font-bold text-[var(--cream-700)] mb-1">Sign out?</h2>
+			<p class="text-sm text-[var(--cream-500)] mb-6">You'll need to log in again to access your data.</p>
+			<div class="flex gap-2">
+				<button
+					onclick={() => showSignOut = false}
+					class="btn-secondary flex-1 py-2.5 text-sm"
+				>
+					Cancel
+				</button>
+				<form method="POST" action="/logout" use:enhance={() => {
+					signingOut = true;
+					return async ({ update }) => { await update(); signingOut = false; };
+				}} class="flex-1">
+					<button type="submit" disabled={signingOut} class="btn-primary w-full py-2.5 text-sm !bg-red-400 hover:!bg-red-500 flex items-center justify-center gap-2 disabled:opacity-60">
+						{#if signingOut}
+							<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></svg>
+							Signing out...
+						{:else}
+							Sign out
+						{/if}
+					</button>
+				</form>
+			</div>
 		</div>
 	</div>
 {/if}
