@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import type { ActionData } from './$types';
+	import type { PageData, ActionData } from './$types';
 
-	let { form }: { form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <div class="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
@@ -16,7 +16,11 @@
 				<img src="/favicon.png" alt="BabyGrowth" class="w-14 h-14 mx-auto mb-3" />
 			</a>
 			<h1 class="text-2xl font-bold text-[var(--cream-700)]">Welcome back</h1>
-			<p class="text-[var(--cream-500)] text-sm mt-1">Sign in to track your little one</p>
+			{#if data.invite}
+				<p class="text-[var(--cream-500)] text-sm mt-1">Sign in to accept your invite</p>
+			{:else}
+				<p class="text-[var(--cream-500)] text-sm mt-1">Sign in to track your little one</p>
+			{/if}
 		</div>
 
 		{#if form?.error}
@@ -26,6 +30,9 @@
 		{/if}
 
 		<form method="POST" use:enhance>
+			{#if data.invite}
+				<input type="hidden" name="inviteToken" value={data.invite} />
+			{/if}
 			<div class="mb-4">
 				<label for="email" class="block text-sm font-semibold mb-1.5 text-[var(--cream-600)]">Email</label>
 				<input
@@ -61,7 +68,7 @@
 
 		<p class="text-center mt-6 text-sm text-[var(--cream-500)]">
 			Don't have an account?
-			<a href="/signup" class="text-[var(--primary)] font-bold hover:underline">Sign up</a>
+			<a href="/signup{data.invite ? `?invite=${data.invite}` : ''}" class="text-[var(--primary)] font-bold hover:underline">Sign up</a>
 		</p>
 	</div>
 </div>

@@ -1,32 +1,37 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { children, measurements } from '$lib/server/db/schema';
+import { children, measurements, users } from '$lib/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { getAccessibleChildren, getPartners } from '$lib/server/access';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.userId) redirect(303, '/login');
 
-	const userChildren = await db
-		.select()
-		.from(children)
-		.where(eq(children.userId, locals.userId))
-		.orderBy(children.name);
+	const { owned, shared } = await getAccessibleChildren(locals.userId);
+	const allChildren = [...owned, ...shared];
 
 	// Get latest measurement for each child
 	const childrenWithLatest = await Promise.all(
-		userChildren.map(async (child) => {
+		allChildren.map(async (child) => {
 			const [latest] = await db
 				.select()
 				.from(measurements)
 				.where(eq(measurements.childId, child.id))
 				.orderBy(desc(measurements.date))
 				.limit(1);
-			return { ...child, latestMeasurement: latest ?? null };
+			const isShared = shared.some((s) => s.id === child.id);
+			return { ...child, latestMeasurement: latest ?? null, isShared };
 		})
 	);
 
-	return { children: childrenWithLatest };
+	const partners = await getPartners(locals.userId);
+
+	// Get user name for greeting
+	const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, locals.userId)).limit(1);
+	const userName = user?.name ?? null;
+
+	return { children: childrenWithLatest, partners, userName };
 };
 
 export const actions: Actions = {
@@ -62,7 +67,7 @@ export const actions: Actions = {
 			});
 		}
 
-		return { success: true };
+		return { success: true, childId: child.id };
 	},
 
 	deleteChild: async ({ request, locals }) => {
@@ -71,7 +76,7 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const childId = form.get('childId') as string;
 
-		// Verify ownership
+		// Only the owner can delete
 		const [child] = await db
 			.select()
 			.from(children)

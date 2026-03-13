@@ -4,7 +4,7 @@ import { validateSession, SESSION_COOKIE } from '$lib/server/auth';
 export const handle: Handle = async ({ event, resolve }) => {
 	const token = event.cookies.get(SESSION_COOKIE);
 	if (token) {
-		const userId = validateSession(token);
+		const userId = await validateSession(token);
 		if (userId) {
 			event.locals.userId = userId;
 		}

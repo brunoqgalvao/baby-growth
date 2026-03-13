@@ -22,13 +22,13 @@
 		standard = 'who',
 		measurementType = 'weight',
 		dataPoints = [],
-		onpointdblclick
+		onpointclick
 	}: {
 		sex: Sex;
 		standard?: Standard;
 		measurementType?: MeasurementType;
 		dataPoints?: DataPoint[];
-		onpointdblclick?: (id: string) => void;
+		onpointclick?: (id: string) => void;
 	} = $props();
 
 	let canvas: HTMLCanvasElement;
@@ -344,18 +344,14 @@
 		return undefined;
 	}
 
-	function handleDblClick(e: MouseEvent) {
-		if (!onpointdblclick) return;
-		const { cx, cy } = getCanvasCoords(e);
-		const id = findPointAt(cx, cy);
-		if (id) onpointdblclick(id);
-	}
+	// Track whether mousedown started on a data point
+	let mouseDownPointId: string | undefined = undefined;
 
 	function handleMouseDown(e: MouseEvent) {
-		// Only start drag on left button and not on a data point
 		if (e.button !== 0) return;
 		const { cx, cy } = getCanvasCoords(e);
-		if (findPointAt(cx, cy)) return; // let dblclick handle data points
+		mouseDownPointId = findPointAt(cx, cy);
+		// Always track drag start — we'll decide on mouseUp if it was a click or drag
 		isDragging = true;
 		dragStartX = cx;
 		dragStartY = cy;
@@ -368,7 +364,9 @@
 		if (isDragging) {
 			dragCurrentX = cx;
 			dragCurrentY = cy;
-			canvas.style.cursor = 'crosshair';
+			const dx = Math.abs(dragCurrentX - dragStartX);
+			const dy = Math.abs(dragCurrentY - dragStartY);
+			canvas.style.cursor = (dx > 5 || dy > 5) ? 'crosshair' : (mouseDownPointId ? 'pointer' : 'default');
 		} else {
 			canvas.style.cursor = findPointAt(cx, cy) ? 'pointer' : 'crosshair';
 		}
@@ -378,13 +376,22 @@
 		if (!isDragging) return;
 		isDragging = false;
 
-		if (!inverseX || !inverseY) return;
-
 		const dx = Math.abs(dragCurrentX - dragStartX);
 		const dy = Math.abs(dragCurrentY - dragStartY);
 
-		// Need a minimum drag distance to count as zoom (not just a click)
-		if (dx < 10 && dy < 10) return;
+		// Small movement = click, not drag
+		if (dx < 10 && dy < 10) {
+			// If we clicked on a data point, fire the callback
+			if (mouseDownPointId && onpointclick) {
+				onpointclick(mouseDownPointId);
+			}
+			mouseDownPointId = undefined;
+			return;
+		}
+
+		mouseDownPointId = undefined;
+
+		if (!inverseX || !inverseY) return;
 
 		const x1 = inverseX(Math.min(dragStartX, dragCurrentX));
 		const x2 = inverseX(Math.max(dragStartX, dragCurrentX));
@@ -448,11 +455,21 @@
 		bind:this={canvas}
 		class="w-full"
 		style="height: 350px"
-		ondblclick={handleDblClick}
 		onmousedown={handleMouseDown}
 		onmousemove={handleMouseMove}
 		onmouseup={handleMouseUp}
 		onmouseleave={() => { isDragging = false; }}
+		ontouchstart={(e) => {
+			const touch = e.touches[0];
+			const rect = canvas.getBoundingClientRect();
+			const cx = touch.clientX - rect.left;
+			const cy = touch.clientY - rect.top;
+			const id = findPointAt(cx, cy);
+			if (id && onpointclick) {
+				e.preventDefault();
+				onpointclick(id);
+			}
+		}}
 	></canvas>
 	{#if isZoomed}
 		<button

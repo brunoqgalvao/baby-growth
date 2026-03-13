@@ -3,16 +3,12 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { children, measurements } from '$lib/server/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
+import { hasChildAccess, createInvite } from '$lib/server/access';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!locals.userId) redirect(303, '/login');
 
-	const [child] = await db
-		.select()
-		.from(children)
-		.where(and(eq(children.id, params.id), eq(children.userId, locals.userId)))
-		.limit(1);
-
+	const child = await hasChildAccess(locals.userId, params.id);
 	if (!child) error(404, 'Child not found');
 
 	const allMeasurements = await db
@@ -28,12 +24,7 @@ export const actions: Actions = {
 	addMeasurement: async ({ request, params, locals }) => {
 		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
 
-		const [child] = await db
-			.select()
-			.from(children)
-			.where(and(eq(children.id, params.id), eq(children.userId, locals.userId)))
-			.limit(1);
-
+		const child = await hasChildAccess(locals.userId, params.id);
 		if (!child) return fail(404, { error: 'Child not found' });
 
 		const form = await request.formData();
@@ -64,12 +55,7 @@ export const actions: Actions = {
 	updateMeasurement: async ({ request, params, locals }) => {
 		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
 
-		const [child] = await db
-			.select()
-			.from(children)
-			.where(and(eq(children.id, params.id), eq(children.userId, locals.userId)))
-			.limit(1);
-
+		const child = await hasChildAccess(locals.userId, params.id);
 		if (!child) return fail(404, { error: 'Child not found' });
 
 		const form = await request.formData();
@@ -102,13 +88,7 @@ export const actions: Actions = {
 	deleteMeasurement: async ({ request, params, locals }) => {
 		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
 
-		// Verify child ownership
-		const [child] = await db
-			.select()
-			.from(children)
-			.where(and(eq(children.id, params.id), eq(children.userId, locals.userId)))
-			.limit(1);
-
+		const child = await hasChildAccess(locals.userId, params.id);
 		if (!child) return fail(404, { error: 'Child not found' });
 
 		const form = await request.formData();
@@ -119,5 +99,12 @@ export const actions: Actions = {
 		);
 
 		return { success: true };
+	},
+
+	createInvite: async ({ params, locals }) => {
+		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
+
+		const invite = await createInvite(locals.userId, params.id);
+		return { inviteToken: invite.code };
 	}
 };
