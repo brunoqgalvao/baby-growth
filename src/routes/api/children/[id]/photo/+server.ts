@@ -4,7 +4,7 @@ import { db } from '$lib/server/db';
 import { children } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 1 * 1024 * 1024; // 1MB (client resizes before upload)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export const POST: RequestHandler = async ({ request, params, locals }) => {

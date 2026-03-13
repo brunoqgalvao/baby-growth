@@ -170,6 +170,24 @@ export async function redeemInvite(token: string, acceptingUserId: string) {
 }
 
 /**
+ * Get users who have shared access to a specific child (excluding the owner).
+ */
+export async function getChildSharedWith(childId: string) {
+	const rows = await db
+		.select({
+			id: users.id,
+			name: users.name,
+			email: users.email,
+			sharedAt: childAccess.createdAt
+		})
+		.from(childAccess)
+		.innerJoin(users, eq(users.id, childAccess.userId))
+		.where(eq(childAccess.childId, childId));
+
+	return rows;
+}
+
+/**
  * Get partners who share children with this user.
  */
 export async function getPartners(userId: string) {

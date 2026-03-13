@@ -18,6 +18,7 @@
 	let signingOut = $state(false);
 	let addingChild = $state(false);
 	let deletingChild = $state(false);
+	let showChildPicker = $state(false);
 
 	function toggleMenu(childId: string, e: MouseEvent) {
 		e.preventDefault();
@@ -102,6 +103,14 @@
 		return 'Good evening';
 	}
 
+	function handleQuickAdd() {
+		if (data.children.length === 1) {
+			window.location.href = `/child/${data.children[0].id}?addMeasurement=1`;
+		} else if (data.children.length > 1) {
+			showChildPicker = true;
+		}
+	}
+
 	function getRelativeDate(dateStr: string): string {
 		const d = parseLocalDate(dateStr);
 		const now = new Date();
@@ -133,7 +142,7 @@
 	>Sign out</button>
 </nav>
 
-<div class="max-w-4xl mx-auto px-4 py-8 animate-in">
+<div class="max-w-4xl mx-auto px-4 py-8 pb-24 sm:pb-8 animate-in">
 	<!-- Greeting -->
 	<div class="mb-8">
 		<h1 class="text-2xl font-bold text-[var(--cream-700)]">
@@ -570,6 +579,81 @@
 			>
 				Done
 			</button>
+		</div>
+	</div>
+{/if}
+
+<!-- Mobile bottom bar -->
+{#if data.children.length > 0}
+	<div class="fixed bottom-0 left-0 right-0 sm:hidden z-40 bg-white/95 backdrop-blur-md border-t border-[var(--cream-200)] flex items-center px-5 py-3">
+		<a
+			href="/dashboard"
+			class="w-9 h-9 rounded-full flex items-center justify-center text-[var(--cream-400)]"
+		>
+			<svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+			</svg>
+		</a>
+		<div class="flex-1 flex justify-center">
+			<button
+				onclick={handleQuickAdd}
+				class="btn-primary w-12 h-12 rounded-full flex items-center justify-center shadow-[0_4px_16px_rgba(232,120,92,0.35)]"
+			>
+				<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+			</button>
+		</div>
+		<div class="w-9"></div>
+	</div>
+{/if}
+
+<!-- Child Picker Modal (for multi-child quick add) -->
+{#if showChildPicker}
+	<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus -->
+	<div
+		class="fixed inset-0 bg-black/20 z-50 backdrop-blur-[2px]"
+		onclick={(e) => { if (e.target === e.currentTarget) showChildPicker = false }}
+		role="dialog"
+		style="animation: fadeOverlay 0.2s ease-out"
+	>
+		<div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] shadow-[0_-8px_40px_rgba(0,0,0,0.12)] max-h-[85vh] overflow-y-auto" style="animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)">
+			<!-- Drag handle -->
+			<div class="flex justify-center pt-3 pb-1">
+				<div class="w-10 h-1 rounded-full bg-[var(--cream-300)]"></div>
+			</div>
+
+			<div class="px-5 pb-6 pt-2">
+				<div class="flex items-center justify-between mb-4">
+					<h2 class="text-lg font-bold text-[var(--cream-700)]">Log measurement for...</h2>
+					<button
+						onclick={() => showChildPicker = false}
+						class="w-8 h-8 rounded-full flex items-center justify-center text-[var(--cream-400)] hover:bg-[var(--cream-100)] transition-all cursor-pointer"
+					>
+						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+					</button>
+				</div>
+
+				<div class="space-y-2">
+					{#each data.children as child}
+						<a
+							href="/child/{child.id}?addMeasurement=1"
+							class="flex items-center gap-3 p-4 rounded-[var(--radius)] border border-[var(--cream-200)] hover:border-[var(--primary)] hover:bg-[var(--peach-50)] transition-all"
+						>
+							{#if child.photoUrl}
+								<img src={child.photoUrl} alt={child.name} class="w-10 h-10 rounded-full object-cover border-2 {child.sex === 'boy' ? 'border-[var(--boy)]' : 'border-[var(--girl)]'}" />
+							{:else}
+								<div class="w-10 h-10 rounded-full flex items-center justify-center text-lg {child.sex === 'boy' ? 'bg-[var(--boy-bg)]' : 'bg-[var(--girl-bg)]'}">
+									{child.sex === 'boy' ? '👶' : '👧'}
+								</div>
+							{/if}
+							<div class="flex-1 min-w-0">
+								<span class="font-bold text-[var(--cream-700)]">{child.name}</span>
+								<span class="text-sm text-[var(--cream-500)] ml-2">{getAge(child.dateOfBirth)}</span>
+							</div>
+							<svg class="w-5 h-5 text-[var(--cream-400)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+						</a>
+					{/each}
+				</div>
+			</div>
 		</div>
 	</div>
 {/if}

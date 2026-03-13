@@ -3,7 +3,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { children, measurements } from '$lib/server/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
-import { hasChildAccess, createInvite } from '$lib/server/access';
+import { hasChildAccess, createInvite, getChildSharedWith } from '$lib/server/access';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!locals.userId) redirect(303, '/login');
@@ -11,13 +11,16 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const child = await hasChildAccess(locals.userId, params.id);
 	if (!child) error(404, 'Child not found');
 
-	const allMeasurements = await db
-		.select()
-		.from(measurements)
-		.where(eq(measurements.childId, child.id))
-		.orderBy(asc(measurements.date));
+	const [allMeasurements, sharedWith] = await Promise.all([
+		db
+			.select()
+			.from(measurements)
+			.where(eq(measurements.childId, child.id))
+			.orderBy(asc(measurements.date)),
+		getChildSharedWith(child.id)
+	]);
 
-	return { child, measurements: allMeasurements };
+	return { child, measurements: allMeasurements, sharedWith };
 };
 
 export const actions: Actions = {
@@ -97,6 +100,26 @@ export const actions: Actions = {
 		await db.delete(measurements).where(
 			and(eq(measurements.id, measurementId), eq(measurements.childId, child.id))
 		);
+
+		return { success: true };
+	},
+
+	updateChildName: async ({ request, params, locals }) => {
+		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
+
+		const child = await hasChildAccess(locals.userId, params.id);
+		if (!child) return fail(404, { error: 'Child not found' });
+
+		// Only the owner can rename
+		if (child.userId !== locals.userId) return fail(403, { error: 'Only the parent who added this child can rename them' });
+
+		const form = await request.formData();
+		const name = (form.get('name') as string)?.trim();
+
+		if (!name || name.length < 1) return fail(400, { error: 'Name is required' });
+		if (name.length > 50) return fail(400, { error: 'Name is too long' });
+
+		await db.update(children).set({ name }).where(eq(children.id, child.id));
 
 		return { success: true };
 	},
