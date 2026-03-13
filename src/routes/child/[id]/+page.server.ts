@@ -104,7 +104,12 @@ export const actions: Actions = {
 	createInvite: async ({ params, locals }) => {
 		if (!locals.userId) return fail(401, { error: 'Unauthorized' });
 
-		const invite = await createInvite(locals.userId, params.id);
-		return { inviteToken: invite.code };
+		try {
+			const invite = await createInvite(locals.userId, params.id);
+			return { inviteToken: invite.code };
+		} catch (e) {
+			console.error('createInvite failed:', e);
+			return fail(500, { error: 'Failed to create invite link' });
+		}
 	}
 };

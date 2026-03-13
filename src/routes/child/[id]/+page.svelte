@@ -334,6 +334,11 @@
 				</div>
 				<p class="text-xs text-[var(--cream-400)] mt-3 text-center">Link expires in 48 hours. One-time use.</p>
 			{:else}
+				{#if form?.error && !form?.inviteToken}
+					<div class="mb-3 p-3 bg-red-50 border border-red-200 rounded-[var(--radius-sm)] text-sm text-red-600">
+						{form.error}
+					</div>
+				{/if}
 				<form method="POST" action="?/createInvite" use:enhance>
 					<button type="submit" class="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2">
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
